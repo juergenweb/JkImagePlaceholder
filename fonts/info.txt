@@ -1,0 +1,4 @@
+All fonts in this folder are from https://fonts.google.com
+
+You can read more about the license in the OFL file (Original font license) of the font.
+By using this fonts you agree to the terms of use.
