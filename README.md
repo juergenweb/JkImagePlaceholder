@@ -4,6 +4,8 @@ Processwire module for easy creation of placeholder images on the frontend. Uses
 If you want to use a TTF which is not existent on the system, you can upload it inside the configuration page or you add it under your template folder.
 You can set default values that should be used for all placeholder images, but you can overwrite every param (size, text color, background color,...) on the fly on each instance.
 
+[Placeholderimage](./placeholderimage.png?raw=true)
+
 ## Configuration options
 - Set the default text for the placeholder image (multilanguage)
 - Set the default background color for the image in hexadecimal color code
