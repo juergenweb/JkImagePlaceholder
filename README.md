@@ -1,6 +1,6 @@
 # JkImagePlaceholder
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text (fe Sorry, no pic!).
-2 TTFs are installed by default(FjallaOne-Regular.ttf and Lobster-Regular.ttf). If you have stored TTF under your site/template document tree, this module will also take care of it.
+2 TTFs are installed by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). If you have stored TTF under your site/template document tree, this module will also take care of it.
 If you want to use a TTF which is not existent on the system, you can upload it inside the configuration page or you add it under your template folder.
 You can set default values that should be used for all placeholder images, but you can overwrite every param (size, text color, background color,...) on the fly on each instance.
 
