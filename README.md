@@ -83,4 +83,4 @@ Take a look at the render method, which includes true as a boolean value. This m
 
 ## Multilanguage
 
-The text for the placeholder can be set multilingual (in module configuration and via setText() method). By setting the text via setText() method in template, please use translateable strings(fe _('My text')) for multilanguage text.
+The text for the placeholder can be set multilingual (in module configuration and via setText() method). By setting the text via setText() method in template, please use translatable strings(fe _('My text')) for multilanguage text.
