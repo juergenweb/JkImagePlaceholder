@@ -399,6 +399,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     public function render(bool $tag = false)
     {
+        $altText = $this->_('Placeholder image');
         if (empty($this->getHeight())) {
             $this->setHeight($this->getWidth());
         } // make squared image
@@ -427,6 +428,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         if (array_key_exists($this->getFontFamily(), $this->getFontFiles())) {
             if ($this->getText()) {
                 $text = $this->getText();
+                $altText = $text;
                 $fontFile = $this->getFontFilePath($this->getFontFamily());
 
               // get the the coordinates for width and height of the text in pixel
@@ -458,7 +460,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             $class = ' class="' . $this->css_class . '"';
         }
         if ($tag) {
-            $html = '<img' . $class . ' src="' . $html . '" width="' . $this->getWidth() . 'px" height="' . $this->getHeight() . 'px" alt="' . $this->getText() . '" title="' . $this->getText() . '" />';
+            $html = '<img' . $class . ' src="' . $html . '" width="' . $this->getWidth() . 'px" height="' . $this->getHeight() . 'px" alt="' . $altText . '" />';
         }
 
         return $html;
