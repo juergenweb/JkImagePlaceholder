@@ -60,7 +60,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             $this->font_files = $data['font_files'];
 
             $this->setDefaultTextAsText();
-            $this->addHookAfter("Inputfield::processInput", $this, "validateField"); // Custom validation for input fields
+            $this->addHookAfter("InputfieldText::processInput", $this, "validateField"); // Custom validation for input fields
         }
     }
 
@@ -87,12 +87,14 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $name = $inputfield->name;
 
         if (($name == 'background_color') || ($name == 'text_color')) {
-            if (!$this->validateHexadecimal($inputfield->attr("value"))) {
-                $inputfield->error($this->_("Only heaxadecimal values are allowed"));
-            } else {
-              //sanatize the value and populate it back to the inputfield
-                $sanitizedValue = $this->sanitizeHex($inputfield->attr("value"));
-                $inputfield->value = $sanitizedValue;
+            if ($inputfield->attr("value")) {
+                if (!$this->validateHexadecimal($inputfield->attr("value"))) {
+                    $inputfield->error($this->_("Only heaxadecimal values are allowed"));
+                } else {
+                  //sanatize the value and populate it back to the inputfield
+                    $sanitizedValue = $this->sanitizeHex($inputfield->attr("value"));
+                    $inputfield->value = $sanitizedValue;
+                }
             }
         }
     }
@@ -561,7 +563,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->options = $this->createFontFamilySelect();
         $f->required = true;
         $inputfields->add($f);
-
 
 
         /* @var InputfieldInteger $f */
