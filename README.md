@@ -1,24 +1,23 @@
 # JkImagePlaceholder
-Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text (fe Sorry, no pic!).
-2 TTFs are installed by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). If you have stored TTF under your site/template document tree, this module will also take care of it.
-If you want to use a TTF which is not existent on the system, you can upload it inside the configuration page or you add it under your template folder.
-You can set default values that should be used for all placeholder images, but you can overwrite every param (size, text color, background color,...) on the fly on each instance.
+Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
+(fe Sorry, no pic!).
 
-![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/placeholderimage.jpg?raw=true)
+Benefits:
 
-## Configuration options
-- Set the default text for the placeholder image (multilanguage)
-- Set the default background color for the image in hexadecimal color code
-- Set the default color for the text in hexadecimal color code
-- Set the default font for the text from a select field
-- Set a default CSS class for the placeholder images
-- Set the default fontsize
+- 2 TTFs are shipped with this module by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). 
+- Allows upload and deletion of other fonts
+- Allows scanning the complete site to find and use other TruetypeFonts (fe used by templates or other modules)
+- Preview of all fonts in the select font input field - you can see how the font looks like
+- Global setting of various colors: background color, text color,..
+- Supports adding of text shadow to the placeholder text
+- Set global placeholder text (multi-language)
+- Set global image tag CSS class for the placeholder image tag
+- If you have installed FieldtypeColor or FieldtypeColorPicker you can select if you want to use one of these fields for color inputs instead of a text input.
 
-Additional font files in TrueType format (ttf) can be uploaded via an upload field.
-If you are using TTF files inside your template, you can use them too. This module scans all directories under the site/template folder for TTF files and saves the name and the path of TTF files found to a database field. So you can use these fonts for your placeholder images too.
-This is very useful, because you do not have to store font files twice (inside the template and inside the module).
+![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/placeholderimage.jpg?raw=true)
 
-## Setting Methods
+
+## Public methods to set/change properties manually
 - setTextColor(string)
 - setBackgroundColor(string)
 - setWidth(int)
@@ -27,8 +26,12 @@ This is very useful, because you do not have to store font files twice (inside t
 - setFontSize(int)
 - setText(string)
 - setCSSClass(string)
+- noText()
+- setShadowColor()
+- setXOffset()
+- setYOffset()
 
-Use these methods to set a value or to overwrite default values from the module configuration.
+Use these methods below to set a value or to overwrite default values from the module configuration.
 
 ### setTextColor() method
 
@@ -42,8 +45,9 @@ Set a hexadecimal color for the background if you want to add or overwrite the b
 
 ### setFontFamily() method
 
-Set the name of the Font-Family that should be used. You can only use fonts that you will find inside the font family select inside the module configuration. If you will enter a font family name that does not exist, the default font-family will be used instead.
-`setFontFamily('myFont')`
+Set the name of the Font-Family that should be used. You can only use fonts that you will find inside the font family select inside the module configuration. If you enter a font family name that does not exist, the default font-family will be used instead.
+`setFontFamily('myFont')` or `setFontFamily('myFont.ttf')`.
+It does not matter if you add the extension or not.
 
 ### setWidth() method
 
@@ -52,10 +56,8 @@ Set the width of the image in px.
 
 ### setHeight() method
 
-Set the height of the image in px.
+Set the height of the image in px. If no height is set explicitly the height will be set to the value of the width.
 `setHeight(300)`
-
-If you want the placeholder image to be squared, do not enter a height.
 
 ### setCSSClass() method
 
@@ -64,8 +66,34 @@ Set or overwrite the CSS class of the image tag.
 
 ### setFontSize() method
 
-Set the fontsize of the placeholdertext in px.
+Set the fontsize of the placeholder text in px (without entering the px inside the parenthesis).
 `setFontSize(30)`
+
+### noText() method
+
+Suppress the output of text inside the placeholder image if a text was set in the global settings.
+`noText()`
+
+### setShadowColor() method
+
+Set a hexadecimal color for the text if you want to add a shadow to the text.
+`setShadowColor('#990000')`
+
+If you want to disable the shadow, do not add a HEX code inside the parenthesis.
+`setShadowColor()`
+
+### setXOffset() method
+
+Set the offset for the x-coordinate of the text shadow. You can enter positive and negative values
+`setXOffset(3)`
+Offset is 3px in this case.
+
+### setYOffset() method
+
+Set the offset for the y-coordinate of the text shadow. You can enter positive and negative values
+`setYOffset(3)`
+Offset is 3px in this case.
+
 
 ## Examples for usage in templates
 
@@ -73,14 +101,53 @@ Set the fontsize of the placeholdertext in px.
 
 `echo $modules->JkImagePlaceholder->setWidth(800)->setHeight(400)->render();`
 
-This will output the img src as base64 string.
+This will output the img src as base64 string. In this case you have to write the image tag by yourself.
 
-### Usage with all parameters set individually (default values will be overwritten)
+### Usage with all parameters set individually (global values will be overwritten)
 
-`echo $modules->JkImagePlaceholder->setFontSize(30)->setWidth(800)->setHeight(400)->setBackgroundColor('#dddddd')->setTextColor('#000000')->setText('My placeholder')->setFontFamily('pacifico')->render(true);`
+`echo $modules->JkImagePlaceholder
+->setFontSize(30)
+->setWidth(800)
+->setHeight(400)
+->setBackgroundColor('#dddddd')
+->setTextColor('#000000')
+->setText('My placeholder text')
+->setFontFamily('pacifico.ttf')
+->setShadowColor('#666666')
+->setXOffset(-1)
+->setYOffset(1)
+->render(true);`
 
-Take a look at the render method, which includes true as a boolean value. This means that a complete image tag will be rendered instead of only the src value.
+Take a look at the render method, which includes true as a boolean parameter.
+This means that a complete image tag will be rendered instead of only the src value.
+So if you enter true as parameter inside the parenthesis, a whole image tag will be rendered instead of the
+image src only.
 
-## Multilanguage
+## Select field type for input field color
+If you have installed FieldtypeColor and/or FieldtypeColorPicker you can select if you want to use one of these field types
+or not.
+Otherwise an InputfieldText will be displayed for entering color values for text, background and shadow color.
 
-The text for the placeholder can be set multilingual (in module configuration and via setText() method). By setting the text via setText() method in template, please use translatable strings(fe _('My text')) for multilanguage text.
+1) Simple text input
+![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/text-input.jpg?raw=true)
+
+2) Fieldtype ColorPicker input
+![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/color-picker-input.jpg?raw=true)
+
+3) Fieldtype Color input
+![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/color-input.jpg?raw=true)
+
+## Preview of font family
+
+The font family selection field provides a preview of all fonts, so it will be much easier for you to decide which font
+you want to use.
+
+![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/font-families-input.jpg?raw=true)
+
+## Multi-language
+
+The text for the placeholder can be set multilingual (in module configuration and via setText() method).
+By setting the text via setText() method in template, please use translatable strings(fe _('My text'))
+for multi-language text (same as in templates). Otherwise you can use a simple text string.
+
+`setText(_('My placeholder text))`
