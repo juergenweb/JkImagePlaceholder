@@ -1,102 +1,413 @@
 <?php
+declare(strict_types=1);
 
 namespace ProcessWire;
 
+use Exception;
+
 class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 {
-    protected $fonts = [];
+    protected array $fonts = [];
+    protected string $input_module_color_inputfield = ''; // which inputfield should be used for the color inputs
+    protected string|int|null $input_width = ''; // the width of the placeholder image
+    protected string|int|null $input_height = ''; // the height of the placeholder image
+    protected string|int $input_font_size = ''; // the font-size for the placeholder text in px
+    protected string|null $input_background_color = ''; // the background-color as hex code string
+    protected string|null $input_shadow_color = ''; // the text shadow-color as hex code string
+    protected string|int $input_x_offset = ''; // the x-offset for the text shadow in px
+    protected string|int $input_y_offset = ''; // the y-offset for the text shadow in px
+    protected string $input_css_class = '';  // the css class for the placeholder image tag
+    protected string $input_text_color = ''; // the text-color as hex code string
+    protected string $input_font_family = ''; // the name of the text font
+    protected string|array $font_files = []; // // array the holds all font-files that were found inside the project
+    protected string|null $input_text = ''; // the custom text for the placeholder image
+    protected string $input_defaultText = ''; // the default text for the placeholder image
+    protected array $moduleConfig = []; // the module configuration
+    protected string $pathToFonts = ''; // the path to the font folder of the module
+    protected string $altText = ''; // the alternative text for the alt attribute of the image tag
+    protected bool $no_text = false; // hide text on placeholder image
 
-    protected static $configDefaults = [
-      'width' => '650',
-      'height' => null,
-      'font_size' => '14',
-      'background_color' => null,
-      'css_class' => '',
-      'text_color' => '#666666',
-      'font_family' => 'fjallaone-regular',
-      'font_files' => '',
-      'text' => '',
-      'defaultText' => ''
-    ];
-
-    public static function getModuleInfo()
+    /**
+     * @return array
+     */
+    public static function getModuleInfo(): array
     {
-        return  [
-        'title' => 'Image Placeholder',
-        'summary' => 'A configurable module for creating placeholder images by using True Type fonts for the text',
-        'author' => 'Jürgen Kern',
-        'autoload' => false,
-        'singular' => true,
-        'requires' => 'ProcessWire>=3.0.181, PHP>=7.2.0',
-        'href' => 'https://github.com/juergenweb/JkImagePlaceholder',
-        'icon' => 'image',
-        'version' => '1.3.0'
+        return [
+            'title' => 'Image Placeholder',
+            'summary' => 'A configurable module for creating placeholder images by using TrueTypeFonts for the placeholder text',
+            'author' => 'Jürgen Kern',
+            'autoload' => true,
+            'singular' => true,
+            'requires' => 'ProcessWire>=3.0.181, PHP>=8.1.0',
+            'href' => 'https://github.com/juergenweb/JkImagePlaceholder',
+            'icon' => 'image',
+            'version' => '1.4.0'
         ];
     }
 
+    /**
+     * @throws WireException
+     */
     public function __construct()
     {
         parent::__construct();
+
+        // grab the module configuration from the db and add it to the moduleConfig property
+        $this->moduleConfig = $this->wire('modules')->getConfig($this);
+
+        // set the value of each property according to the configuration setting from DB
+        foreach ($this->moduleConfig as $key => $value) {
+            $this->$key = $value;
+        }
+
+        // set the default alternative text for the alt attribute of the image tag
+        $this->setAltText($this->_('Placeholder image'));
+
+        // set path to the font folder
+        $this->pathToFonts = $this->wire('config')->paths->$this . 'fonts/';
+
     }
 
+    /**
+     * These are the default values that will be saved in the db during the installation process
+     * @return array
+     */
+    public static function getDefaultData(): array
+    {
+        return [
+            'input_module_color_inputfield' => 'InputfieldText',
+            'input_width' => '650',
+            'input_height' => null,
+            'input_font_size' => '14',
+            'input_background_color' => null,
+            'input_shadow_color' => null,
+            'input_x_offset' => '2',
+            'input_y_offset' => '2',
+            'input_css_class' => '',
+            'input_text_color' => '#666666',
+            'input_font_family' => '',
+            'font_files' => '',
+            'input_text' => '',
+            'input_defaultText' => ''
+        ];
+    }
 
-    public function init()
+    /**
+     * @return void
+     * @throws WireException
+     */
+    public function init(): void
     {
 
-        // merge default values with stored values from module configuration
-        $data = array_merge(self::$configDefaults, $this->wire('modules')->getConfig($this));
-        foreach ($data as $property => $value) {
-            $this->{$property} = $value;
-        }
-        // check if we are on the backend
-        if ($this->wire('page')->template == 'admin') {
-            // load fonts from templates folder, but only in backend
-            $templateFonts = $this->getAllFontFilesinDir(wire('config')->paths->templates);
-            $fonts = $this->getAllFontFilesinDir(wire('config')->paths->$this . 'fonts');
-            $files = array_merge($templateFonts, $fonts);
-            $data = $this->wire('modules')->getConfig($this);
-            $data['font_files'] = json_encode($files);
-            $this->wire('modules')->saveConfig($this, $data);
-            $this->font_files = $data['font_files'];
+        $this->addHookBefore('InputfieldColorPicker::render', $this, 'removeHashtag');
+        $this->addHookAfter("Inputfield::processInput", $this, "sanitizeValidateColorField");
+        $this->addHookAfter('InputfieldFile::fileAdded', $this, 'addFont');
+        $this->addHookBefore('Modules::saveConfig', $this, 'deleteFonts');
+        $this->addHookBefore('ProcessModule::executeEdit', $this, 'scanProject');
 
-            $this->setDefaultTextAsText();
-            $this->addHookAfter("InputfieldText::processInput", $this, "validateField"); // Custom validation for input fields
+        // add CSS and JS to the backend
+        $version = $this->getModuleInfo()['version'];
+        $this->wire('config')->styles->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.css?v=' . $version);
+        $this->wire('config')->scripts->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.js?v=' . $version);
+
+    }
+
+    /**
+     *  Method to remove the leading hashtag from color values
+     * This is only needed if FieldtypeColorPicker is used for color inputs
+     * @param HookEvent $event
+     * @return void
+     */
+    public function removeHashtag(HookEvent $event): void
+    {
+        $field = $event->object;
+        $color_fields = ['input_background_color', 'input_text_color', 'input_shadow_color'];
+        if (in_array($field->name, $color_fields)) {
+            $value = $field->attributes['value'];
+            $field->value = $field->swatch = ltrim($value, '#');
         }
     }
 
     /**
-     * Get the default text of the placeholder image - needed for multilanguage value
-     * Add the value to the text property inside the constructor
+     * Suppress output of text, if a text has been added before
+     * @return $this
      */
-    protected function setDefaultTextAsText()
+    public function noText(): self
     {
-        $userLanguage = $this->wire('user')->language;
-        $lang = $userLanguage->isDefault() ? '' : "__$userLanguage->id";
-        $this->text = $this->{'text' . $lang};
+        $this->no_text = true;
+        return $this;
+    }
+
+    /**
+     * Convert absolute path into relative url
+     * @param string $filename
+     * @param null $extension
+     * @return string
+     */
+    protected function pwPath2url(string $filename, $extension = null): string
+    {
+        $filename = str_replace('\\', '/', $filename);
+        $info = pathinfo($filename);
+        $dir = str_replace(wire('config')->paths->root, wire('config')->urls->root, $info['dirname'] . '/');
+        return $dir . $info['filename'] . '.' . (is_string($extension) ? $extension : $info['extension']);
+    }
+
+    /**
+     * Find all ttf fonts inside the project that can be used for the placeholder text
+     * Scans the complete project for TrueTypeFonts and returns all files as an array
+     * with path as key and font name as value
+     * @return array
+     * @throws WireException
+     */
+    protected function findAllFontfiles(): array
+    {
+        $files = [];
+        $results = $this->wire('files')->find($this->wire('config')->paths->root,
+            ['recursive' => true, 'extensions' => ['ttf']]);
+
+        if ($results) {
+            foreach ($results as $pathToFont) {
+                if (!str_contains($pathToFont, 'fontawesome') && !str_contains($pathToFont, 'entypo')) {
+                    $files[$this->pwPath2url($pathToFont)] = ucfirst(pathinfo($pathToFont, PATHINFO_BASENAME));
+                }
+            }
+        }
+        return array_unique($files);
+    }
+
+    /**
+     * Minify CSS string to be a one-liner
+     * @param string $css
+     * @return string
+     */
+    protected function minimizeCSSsimple(string $css): string
+    {
+        $css = preg_replace('/\/\*((?!\*\/).)*\*\//', '', $css); // negative look ahead
+        $css = preg_replace('/\s{2,}/', ' ', $css);
+        $css = preg_replace('/\s*([:;{}])\s*/', '$1', $css);
+        return preg_replace('/;}/', '}', $css);
+    }
+
+    /**
+     * Creates a CSS file that includes the CSS for all TrueTypeFonts
+     * @param array $results - array that holds all fonts with key = path, value = font name
+     * @param bool $minify - true: CSS will be minified (default), false: not minified (for dev)
+     * @return void
+     * @throws WireException
+     */
+    protected function createCSSFile(array $results, bool $minify = true): void
+    {
+        if ($results) {
+
+            $date_time_format = $this->wire('config')->dateFormat;
+            $current_date_time = $this->wire('datetime')->date($date_time_format);
+            $css = '
+                    /*
+                    This CSS file was created automatically by the JkImagePlaceholder module
+                    It contains the CSS for all TrueTypeFonts found in the whole project
+                    Creation date: ' . $current_date_time . '
+                    */
+                    
+                    ';
+
+            foreach ($results as $pathToFont => $fontfile) {
+
+                $font_name = strtolower(str_ireplace('.ttf', '', $fontfile));
+
+                //create the css
+                $css .= '
+                    @font-face {
+                        font-family: ' . $font_name . ';
+                        src: url(\'' . $pathToFont . '\');
+                    }
+
+                    .' . $font_name . ' {
+                        font-family: ' . $font_name . ';
+                    }
+                    
+                    ';
+
+            }
+            if ($minify) {
+                $css = $this->minimizeCSSsimple($css); // minify CSS file
+            }
+            // write css to file
+            if ($this->wire('files')->filePutContents($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css',
+                $css)) {
+                $this->wire('session')->message($this->_('CSS file for the TrueTypeFonts was recreated due to changes.'));
+            }
+        }
+    }
+
+    /**
+     * Save the new font in the database and recreate the CSS-file
+     * @param HookEvent $event
+     * @return void
+     * @throws WireException
+     */
+    protected function addFont(HookEvent $event): void
+    {
+        if ($event->object->name === 'input_font_upload') {
+            // get all font TTF-files in the fonts directory of this module
+            $ttf_files = $this->wire('files')->find($this->pathToFonts, ['extensions' => ['ttf', 'TTF']]);
+            $filesInDir = [];
+            // create new array for $filesInDir which can be merged with $this->font_files afterwards
+            array_walk($ttf_files, function ($value) use (&$filesInDir) {
+                $filesInDir[$this->pwPath2url($value)] = ucfirst(pathinfo($value, PATHINFO_BASENAME));
+            });
+            $this->wire('session')->set('addfonts', array_merge($this->font_files, $filesInDir));
+        }
+    }
+
+
+    /**
+     * Delete one or more custom uploaded fonts
+     * @param HookEvent $event
+     * @return void
+     * @throws WireException
+     */
+    protected function deleteFonts(HookEvent $event): void
+    {
+
+        $data = $event->arguments(1);
+
+        if ($event->arguments(0) === 'JkImagePlaceholder') {
+
+            //check if a new font has been uploaded
+            $font_session = $this->wire('session')->get('addfonts');
+            // add the new font file from the addFont() method to the data array for storing it in the db afterwards
+            if ($font_session) {
+                $diff = array_diff($font_session,
+                    array_map('ucfirst', $this->font_files)); // get the recently uploaded file(s)
+                $this->message(sprintf($this->_('The following font has been uploaded and saved inside the database: %s'),
+                    implode(', ', array_map("ucfirst",
+                        $diff)))); // array_map is for future purposes if more than 1 font will be uploaded at once
+                $data['font_files'] = $this->wire('session')->get('addfonts');
+                $this->createCSSFile($data['font_files']); // re-create the CSS file
+            }
+            $this->wire('session')->remove('addfonts');
+
+            // check if files were marked to delete
+            if (isset($data['input_delete_font_family']) && (!empty($data['input_delete_font_family']))) {
+
+                $labels = [];
+                $files = $data['font_files']; // all files as stored inside the database
+                foreach ($data['input_delete_font_family'] as $font) {
+                    $font_name = ucfirst(pathinfo($font, PATHINFO_BASENAME));
+
+                    // check if a font file is selected for deletion that is selected as default font family
+                    if ($this->input_font_family == $this->pwPath2url($font)) {
+                        $this->wire('session')->warning(sprintf($this->_('The font %s cannot be deleted, because it was set as the default font.'),
+                            $font_name));
+                    } else {
+                        // delete font file
+                        if ($this->wire('files')->unlink($font)) {
+                            // remove the files from the database too
+                            unset($files[$this->pwPath2url($font)]);
+                            $labels[] = $font_name;
+                        }
+                    }
+                }
+                $data['font_files'] = $files;
+                if ($labels) {
+                    $this->wire('session')->message(sprintf($this->_('The following fonts have been deleted: %s'),
+                        implode(', ', $labels)));
+                }
+                $this->createCSSFile($data['font_files']); // re-create the CSS file
+            }
+
+            $event->arguments(1, $data);
+        }
+    }
+
+    /**
+     * Search the whole project for TrueTypeFonts, save them inside the database and re-create the CSS file
+     * @return array
+     * If the array is empty means that no changes have been found
+     * If the array key is positive (>0) means that more files were found as stored inside the database
+     * If the array key is negative (0<) means that fewer files were found as stored inside the database
+     * If changes have been found - the CSS file will be recreated and the values will be stored in the database
+     * @throws WireException
+     */
+    protected function searchAndSave(): array
+    {
+        $result = [];
+        $fonts_found = $this->findAllFontfiles();
+        $fonts_db = $this->font_files;
+        // First check if both arrays are identical
+        if (($fonts_found !== $fonts_db)) {
+            // check if more fonts were found (positive result) or fewer fonts were found (negative result)
+            $diff = count($fonts_found) - count($fonts_db);
+            if (wire('modules')->saveConfig($this, 'font_files', $fonts_found)) {
+                // create CSS file
+                $this->createCSSFile($fonts_found);
+                // set positive or negative result as key and the font names as values
+                if ($diff > 0) { // more fonts were found
+                    $value = array_diff($fonts_found, $fonts_db);
+                } else { // fewer fonts were found
+                    $value = array_diff($fonts_db, $fonts_found);
+                }
+                $result = [$diff => $value];
+            }
+        }
+        // set property font_files
+        $this->font_files = $fonts_found;
+        return $result;
+    }
+
+    /**
+     * Scan the whole project to find new fonts if the refresh button was pressed
+     * @return void
+     * @throws WireException
+     */
+    protected function scanProject(): void
+    {
+        if ($this->input->post->input_submit_refreshFonts) {
+            $result = $this->searchAndSave();
+            if ($result) {
+                if (key($result) > 0) {
+                    $this->wire('session')->message(sprintf($this->_('The whole project has been scanned, and the following new TrueTypeFonts were found and added to the selectable font families: %s'),
+                        implode(', ', $result)));
+                } else {
+                    $this->wire('session')->message(sprintf($this->_('The whole project has been scanned, and the following TrueTypeFonts are no longer present and were removed from the database: %s'),
+                        implode(', ', $result)));
+                }
+                // needs a redirect to show changes in the edit form of the module config
+                $this->session->redirect($this->page->httpUrl . "edit?" . $this->input->queryString);
+            } else {
+                $this->message($this->_('The whole project has been scanned, but no new TrueTypeFonts were found.'));
+            }
+        }
     }
 
 
     /**
      * Validate field value if it is in hexadecimal format (# as first letter)
      * @param HookEvent $event
-     * @return bool
+     * @return void
+     * @throws Exception
      */
-    protected function validateField(HookEvent $event)
+    public function sanitizeValidateColorField(HookEvent $event): void
     {
         $inputfield = $event->object;
-        $name = $inputfield->name;
-
-        if (($name == 'background_color') || ($name == 'text_color')) {
-            if ($inputfield->attr("value")) {
-                if (!$this->validateHexadecimal($inputfield->attr("value"))) {
-                    $inputfield->error($this->_("Only heaxadecimal values are allowed"));
+        $color_fields = ['input_background_color', 'input_text_color', 'input_shadow_color'];
+        if (in_array($inputfield->name, $color_fields)) {
+            if ($inputfield->value) {
+                // sanitize hashtags by removing all hashtags first
+                $val = str_replace('#', '', $inputfield->value);
+                $inputfield->value = '#' . $val; // add # at the beginning
+                if (!$this->validateHexadecimal($inputfield->value)) {
+                    $inputfield->error($this->_("Only valid hexadecimal values are allowed. They must start with # and can only consist of 3 (shorthand syntax) or 6 letters and numbers."));
                 } else {
-                  //sanatize the value and populate it back to the inputfield
-                    $sanitizedValue = $this->sanitizeHex($inputfield->attr("value"));
-                    $inputfield->value = $sanitizedValue;
+                    if (strlen($inputfield->value) == 4) { // shorthand syntax
+                        $letters = ltrim($inputfield->value, '#');
+                        $inputfield->value = '#' . $letters . $letters; // create long syntax
+                    }
                 }
+
             }
         }
+
     }
 
     /**
@@ -107,43 +418,67 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     private function validateHexadecimal(string $hexadecimal): bool
     {
         $hex = ltrim($hexadecimal, '#');
-        return ctype_xdigit($hex);
+        if ((strlen($hex) == 3) || (strlen($hex) == 6)) {
+            return ctype_xdigit($hex);
+        }
+        return false;
     }
 
+    /**
+     * Check if hashtag (#) is present
+     * If not, add one before out-putting
+     * This method is necessary, because Color-picker saves the HEX value without the hashtag # in the db
+     * @param string|NULL $color
+     * @return string|null
+     */
+    protected function addHashTagToString(string|null $color = null): ?string
+    {
+        if (($color) && ($color[0] != '#')) {
+            $color = '#' . $color;
+        }
+        return $color;
+    }
 
     /**
      * Helper method for sanitizing hexadecimal colors
      * checks for correct hexadecimal color code first and change short notation to default notation (fe. #f0e to #ff00ee)
      * @param string|null $hexcolor
      * @return string
+     * @throws Exception
      */
     private function sanitizeHex(string $hexcolor = null): string
     {
         if ($hexcolor) {
             $color = trim($hexcolor);
             if ($this->validateHexadecimal($color)) {
+                // check if # is present, otherwise add it
+                if (!str_starts_with($color, '#')) {
+                    $color = '#' . $color;
+                }
                 $number = strlen($color);
+
                 switch ($number) {
                     case ($number === 4):
-                      //shorthand syntax is used -.> so double every letter
+                        //shorthand syntax is used (fe #fc9) -> so double every letter -> #ffcc99
                         $first = substr($color, -3, 1);
                         $second = substr($color, -2, 1);
                         $third = substr($color, -1);
                         $color = '#' . $first . $first . $second . $second . $third . $third;
                         break;
                     case ($number < 7):
-                      //no shorthand syntax is used but syntax is not correct - add a fallback to generate hex color with 6 times the same letter
+                        //no shorthand syntax is used but syntax is not correct - add a fallback to generate hex color with 6 times the same letter
                         $lastLetter = substr($color, -1);
                         $color = str_pad($color, 7, $lastLetter);
                         break;
                     case ($number > 7):
+                        // remove all letters after the 7. position
                         $color = substr($color, 0, 7);
                         break;
                     default:
                 }
                 return $color;
             } else {
-                throw new \Exception($this->_("Only heaxadecimal values are allowed. They must start with # and can only consist of letters and numbers."));
+                throw new Exception($this->_("Only valid hexadecimal values are allowed. They must start with # and can only consist of 3 (shorthand syntax) or 6 letters and numbers."));
             }
         } else {
             return '';
@@ -158,18 +493,18 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function setWidth(int $width): self
     {
         if ($width > 0) {
-            $this->width = $width;
+            $this->input_width = $width;
         }
         return $this;
     }
 
     /**
      * Get the width of the placeholder image
-     * @return string|null
+     * @return int|null
      */
-    public function getWidth()
+    public function getWidth(): ?int
     {
-        return $this->width;
+        return (int)$this->input_width;
     }
 
     /**
@@ -180,28 +515,33 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function setHeight(int $height): self
     {
         if ($height > 0) {
-            $this->height = $height;
+            $this->input_height = $height;
         }
         return $this;
     }
 
     /**
      * Get the height of the placeholder image
-     * @return string|null
+     * @return int|null
      */
-    public function getHeight()
+    public function getHeight(): ?int
     {
-        return $this->height;
+        return $this->input_height;
     }
 
     /**
      * Set the background color of the placeholder image
-     * @param string $backgroundColor
+     * If nothing is entered (null) means that the background is transparent
+     * @param string|null $backgroundColor
      * @return self
+     * @throws Exception
      */
-    public function setBackgroundColor(string $backgroundColor): self
+    public function setBackgroundColor(?string $backgroundColor = null): self
     {
-        $this->background_color = $this->sanitizeHex($backgroundColor);
+        if ($backgroundColor) {
+            $backgroundColor = $this->sanitizeHex($backgroundColor);
+        }
+        $this->input_background_color = $backgroundColor;
         return $this;
     }
 
@@ -209,9 +549,9 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      * Get the background color of the placeholder image
      * @return string|null
      */
-    public function getBackgroundColor()
+    public function getBackgroundColor(): ?string
     {
-        return $this->background_color;
+        return $this->addHashTagToString($this->input_background_color);
     }
 
     /**
@@ -221,38 +561,104 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function setCSSClass(string $css_class): self
     {
-        $this->css_class = $css_class;
+        $this->input_css_class = $css_class;
         return $this;
     }
 
     /**
-     * Get the the CSS class of the placeholder image
+     * Get the CSS class of the placeholder image
      * @return string|null
      */
-    public function getCSSClass()
+    public function getCSSClass(): ?string
     {
-        return $this->css_class;
+        return $this->input_css_class;
     }
-
 
     /**
      * Set the text color of the placeholder image
      * @param string $textColor
      * @return self
+     * @throws Exception
      */
     public function setTextColor(string $textColor): self
     {
-        $this->text_color = $this->sanitizeHex($textColor);
+        $this->input_text_color = $this->sanitizeHex($textColor);
         return $this;
     }
 
     /**
      * Get the text color of the placeholder image
+     * @return string
+     */
+    protected function getTextColor(): string
+    {
+
+        return $this->addHashTagToString($this->input_text_color);
+    }
+
+    /**
+     * Set the text shadow color for the placeholder image
+     * If no shadow color is set (null) means that the shadow is disabled
+     * @param string|null $shadowColor
+     * @return self
+     * @throws Exception
+     */
+    public function setShadowColor(?string $shadowColor = null): self
+    {
+        if ($shadowColor) {
+            $shadowColor = $this->sanitizeHex($shadowColor);
+        }
+        $this->input_shadow_color = $shadowColor;
+        return $this;
+    }
+
+    /**
+     * Get the text shadow color for the placeholder image
      * @return string|null
      */
-    public function getTextColor()
+    protected function getShadowColor(): ?string
     {
-        return $this->text_color;
+        return $this->input_shadow_color;
+    }
+
+    /**
+     * Set the x-offset for the text shadow
+     * @param int $xoffset
+     * @return $this
+     */
+    public function setXOffset(int $xoffset): self
+    {
+        $this->input_x_offset = $xoffset;
+        return $this;
+    }
+
+    /**
+     * Get the x-offset for the text shadow
+     * @return int
+     */
+    protected function getXOffset(): int
+    {
+        return $this->input_x_offset;
+    }
+
+    /**
+     * Set the y-offset for the text shadow
+     * @param int $yoffset
+     * @return $this
+     */
+    public function setYOffset(int $yoffset): self
+    {
+        $this->input_y_offset = $yoffset;
+        return $this;
+    }
+
+    /**
+     * Get the y-offset for the text shadow
+     * @return int
+     */
+    protected function getYOffset(): int
+    {
+        return $this->input_y_offset;
     }
 
     /**
@@ -262,23 +668,35 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function setText(?string $text): self
     {
-        if (($text != null) || ($test != '')) {
-            $this->text = trim($text);
+        if (($text != null) || ($text != '')) {
+            $this->input_text = trim($text);
         } else {
-            $this->text = null;
+            $this->input_text = null;
         }
         return $this;
     }
 
     /**
-     * Get the text of the placeholder image
+     * Get the text of the placeholder image depending on the user language
      * @return string|null
+     * @throws WireException
      */
     public function getText(): ?string
     {
-        return $this->text;
+        if ($this->wire('modules')->isInstalled('LanguageSupport')) {
+            // grab current user lang
+            if ($this->wire('user')->language->id == $this->wire('languages')->getDefault()->id) {
+                $text = $this->input_text;
+            } else {
+                $langID = $this->wire('user')->language;
+                $textLang = 'input_text__' . $langID;
+                $text = $this->$textLang;
+            }
+        } else {
+            $text = $this->input_text;
+        }
+        return $text;
     }
-
 
     /**
      * Set the font size for the placeholder text
@@ -288,80 +706,76 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function setFontSize(int $fontsize): self
     {
         if ($fontsize > 0) {
-            $this->font_size = $fontsize;
+            $this->input_font_size = $fontsize;
         }
         return $this;
     }
 
     /**
      * Get the default fontsize of the placeholder text
-     * @return integer
+     * @return float
      */
-    public function getFontSize(): int
+    public function getFontSize(): float
     {
-        return $this->font_size;
+        return (float)$this->input_font_size;
     }
 
     /**
      * Set the font family for the placeholder text
      * @param string $fontfamily
      * @return self
+     * @throws Exception
      */
     public function setFontFamily(string $fontfamily): self
     {
+        $rawfontfamily = $fontfamily;
         $fontfamily = strtolower(trim($fontfamily));
-      //only allow font names which are in the 'fonts' directory
-        if (array_key_exists($fontfamily, $this->getFontFiles())) {
-            $this->font_family = $fontfamily;
+        if (!str_ends_with($fontfamily, '.ttf')) {
+            $fontfamily = $fontfamily . '.ttf'; // add the extension
+        }
+        // convert all uppercase letters to lowercase
+        $fontfiles = array_map('strtolower', $this->getFontFiles());
+        // check if file exists inside the database
+        $key = array_search($fontfamily, $fontfiles);
+        if ($key) {
+
+            // check if physical file exists under the given path too
+            if ($this->wire('files')->exists($key)) {
+                $this->input_font_family = $key;
+            } else {
+                // start a new site search and update all fonts
+                $this->searchAndSave();
+            }
+
         } else {
-            throw new \Exception($this->_('This font does not exist! Please upload this font in the backend or add this font under your templates folder and visit the configuration page of this module in the backend.'));
+            $this->searchAndSave(); // do a site search first
+            // convert all uppercase letters to lowercase
+            $fontfiles = array_map('strtolower', $this->getFontFiles());
+            // check if file exists inside the database
+            $key = array_search($fontfamily, $fontfiles);
+            if ($key) {
+                $this->input_font_family = $key;
+            } else {
+                throw new Exception(sprintf($this->_('The font %s does not exist! Please select another one or check if your spelling is wrong and causes this error. Possible fonts to select are: %s.'),
+                    $rawfontfamily, implode(', ', $this->getFontFiles())));
+            }
+
         }
         return $this;
     }
 
     /**
-     * Get the default font family of the placeholder text
-     * @return string|null
+     * Get the absolute path to font family of the placeholder text
+     * @param bool $absolutePath
+     * @return string
      */
-    public function getFontFamily()
+    public function getFontFamily(bool $absolutePath = false): string
     {
-        return $this->font_family;
-    }
-
-    /**
-     * Callback array_filter function for the getAllFontFilesInDir method afterwards
-     * Outputs true if array item ends with ".ttf" or ".TTF"
-     * @param string - the array item as string
-     * @return bool
-     */
-    private function filter_files(string $var)
-    {
-      // convert all to lowercase
-        $var = strtolower($var);
-        return ((substr($var, -4) === '.ttf') === true);
-    }
-
-    /**
-     * Return array of all Fontfiles with extension "ttf or "TTF" in the given directory
-     * @return array - returns the filtered array
-     */
-    private function getAllFontFilesInDir(string $fontFilesPath = null)
-    {
-
-        $array = array_filter($this->wire('files')->find($fontFilesPath), [$this, 'filter_files']);
-        $files = [];
-        foreach ($array as $path) {
-            $files[pathinfo($path)['filename']] = $path;
+        $path = wire('config')->paths->root . $this->input_font_family;
+        if (!$absolutePath) {
+            $path = $this->input_font_family;
         }
-        return $files;
-    }
-
-    private function getFontFilePath(string $fontFileName)
-    {
-        $fontFileName = trim($fontFileName);
-        if (array_key_exists($fontFileName, $this->getFontFiles())) {
-            return $this->getFontFiles()[$fontFileName];
-        }
+        return $path;
     }
 
     /**
@@ -371,11 +785,10 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function getFontFiles(): array
     {
         if ($this->font_files) {
-            return (array) json_decode($this->font_files);
+            return $this->font_files;
         }
         return [];
     }
-
 
     /**
      * Create an array of all ttf files for the select options
@@ -386,27 +799,66 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         $selectOptions = [];
         foreach ($this->getFontFiles() as $k => $v) {
-            $selectOptions[$k] = ucwords($k);
+            $selectOptions[$k] = ucwords($v);
         }
         return $selectOptions;
     }
 
+    /**
+     * Get all custom uploaded fonts inside the fonts folder of this module
+     * @return array
+     * @throws WireException
+     */
+    protected function getAllCustomFonts(): array
+    {
+        $result = $this->wire('files')->find($this->pathToFonts, ['extensions' => 'ttf']);
+        $default_fonts = ['fjallaone-regular.ttf', 'lobster-regular.ttf']; // default fonts shipped with this module
+        $fonts = [];
+        foreach ($result as $path) {
+            $font_name = pathinfo($path, PATHINFO_BASENAME);
+            if (!in_array($font_name, $default_fonts)) {
+                $fonts[$path] = $font_name;
+            }
+        }
+        return $fonts;
+    }
 
     /**
-     * Render the img src or a complete image tag
-     *
-     * @param bool tag  true = render a complete tag, false = render only the src (default)
-     * @return array
+     * Set the alternative text for the alt attribute of the image tag
+     * @param string $altText
+     * @return $this
      */
-
-    public function render(bool $tag = false)
+    public function setAltText(string $altText): self
     {
-        $altText = $this->_('Placeholder image');
-        if (empty($this->getHeight())) {
-            $this->setHeight($this->getWidth());
-        } // make squared image
+        $this->altText = $altText;
+        return $this;
+    }
 
+    /**
+     * Get the alternative text of the alt attribute of the image text
+     * @return string
+     */
+    public function getAltText(): string
+    {
+        return $this->altText;
+    }
+
+    /**
+     * Render the image src or the complete image tag
+     * @param bool $tag - true: tag will be rendered, false: only the src will be returned (default)
+     * @return string
+     * @throws WireException
+     */
+    public function render(bool $tag = false): string
+    {
+
+        if (empty($this->getHeight())) {
+            $this->setHeight($this->getWidth()); // make squared image
+        }
+
+        // Create the image
         $image = imagecreatetruecolor($this->getWidth(), $this->getHeight());
+
         // Set the background color of image
         if ($this->getBackgroundColor()) {
             list($r, $g, $b) = sscanf($this->getBackgroundColor(), '#%02x%02x%02x');
@@ -420,32 +872,39 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             imagefill($image, 0, 0, $transparency);
             imagesavealpha($image, true);
         }
-        // Set the text color of image
-        if (!$this->getTextColor()) { //if text color is empty -> use default
-            $this->setTextColor(self::$configDefaults['text_color']);
-        }
-        list($r, $g, $b) = sscanf($this->getTextColor(), '#%02x%02x%02x');
-        $text_color = imagecolorallocate($image, $r, $g, $b);
 
-        if (array_key_exists($this->getFontFamily(), $this->getFontFiles())) {
-            if ($this->getText()) {
-                $text = $this->getText();
-                $altText = $text;
-                $fontFile = $this->getFontFilePath($this->getFontFamily());
+        if (!$this->no_text) {
+            // set the text color for the image text
+            list($r, $g, $b) = sscanf($this->getTextColor(), '#%02x%02x%02x');
+            $text_color = imagecolorallocate($image, $r, $g, $b);
 
-              // get the the coordinates for width and height of the text in pixel
-                $coordinates = imagettfbbox($this->getFontSize(), 0, $fontFile, $text);
+            if (array_key_exists($this->getFontFamily(), $this->getFontFiles())) {
+                if ($this->getText()) {
+                    $text = $this->getText();
 
-              // Center text horizontally
-                $center = ceil($this->getWidth() / 2);
-                $x = $center - (ceil($coordinates[4] / 2));
+                    // get the coordinates for width and height of the text in pixel
+                    $coordinates = imagettfbbox($this->getFontSize(), 0, $this->getFontFamily(true), $text);
 
-              // Center text vertically
-                $center = ceil($this->getHeight() / 2);
-                $y = $center  - (ceil($coordinates[7] / 2));
+                    // Center text horizontally
+                    $center = ceil($this->getWidth() / 2);
+                    $x = (int)($center - (ceil($coordinates[4] / 2)));
 
-              // Draw text string
-                imagettftext($image, $this->getFontSize(), 0, $x, $y, $text_color, $fontFile, $text);
+                    // Center text vertically
+                    $center = ceil($this->getHeight() / 2);
+                    $y = (int)($center - (ceil($coordinates[7] / 2)));
+                    if ($this->getShadowColor()) {
+                        // Draw the shadow for the text if set
+                        list($rs, $gs, $bs) = sscanf($this->getShadowColor(), '#%02x%02x%02x');
+                        $shadow_color = imagecolorallocate($image, $rs, $gs, $bs);
+                        imagettftext($image, $this->getFontSize(), 0, $x + $this->getXOffset(),
+                            $y + $this->getYOffset(), $shadow_color, $this->getFontFamily(true),
+                            $text);
+                    }
+
+                    // Draw text string
+                    imagettftext($image, $this->getFontSize(), 0, $x, $y, $text_color, $this->getFontFamily(true),
+                        $text);
+                }
             }
         }
 
@@ -457,141 +916,315 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         imagedestroy($image);
 
         $html = 'data:image/png;base64,' . base64_encode($contents);
-        $class = '';
-        if ($this->css_class) {
-            $class = ' class="' . $this->css_class . '"';
-        }
+        $class = ($this->getCSSClass()) ? ' class="' . $this->getCSSClass() . '"' : '';
+
         if ($tag) {
-            $html = '<img' . $class . ' src="' . $html . '" width="' . $this->getWidth() . 'px" height="' . $this->getHeight() . 'px" alt="' . $altText . '" />';
+            $html = '<img' . $class . ' src="' . $html . '" width="' . $this->getWidth() . 'px" height="' . $this->getHeight() . 'px" alt="' . $this->getAltText() . '" />';
         }
 
         return $html;
     }
 
-    public function ___install()
+    /**
+     * Method to set multi-language value to a multi-language configuration field
+     * @param string $inputfield_name
+     * @param object $fieldObject
+     * @return void
+     * @throws WireException
+     */
+    protected function setLanguageValue(string $inputfield_name, object $fieldObject): void
     {
-      // check if GD lib is installed
-        if (!extension_loaded('gd') && function_exists('gd_info')) {
-            throw new WireException("PHP GD library is NOT installed on your web server");
+        $languages = $this->wire('languages');
+        if ($languages) { // check if multi-lang site
+            $fieldObject->useLanguages = true;
+            foreach ($languages as $language) {
+                if ($language->isDefault()) {
+                    $fieldObject->set('value', (string)$this->get($inputfield_name));
+                } else {
+                    $fieldObject->set("value$language", (string)$this->get($inputfield_name . '__' . $language->id));
+                }
+            }
         }
     }
 
     /**
-     * Config inputfields
-     *
+     * Config input fields
      * @param InputfieldWrapper $inputfields
+     * @return InputfieldWrapper
+     * @throws WireException
+     * @throws WirePermissionException
      */
-    public function getModuleConfigInputfields($inputfields)
+    public function getModuleConfigInputfields(InputfieldWrapper $inputfields): InputfieldWrapper
     {
 
         $modules = $this->wire('modules');
-        $languages = $this->wire('languages');
+
+        $markup = InputfieldWrapper::getMarkup();
+
+        if (($this->wire('modules')->isInstalled('FieldtypeColor')) || ($this->wire('modules')->isInstalled('FieldtypeColorPicker'))) {
+
+            $options = [
+                'InputfieldText' => 'InputfieldText'
+            ];
+            if ($this->wire('modules')->isInstalled('FieldtypeColorPicker')) {
+                $options['InputfieldColorPicker'] = 'FieldtypeColorPicker';
+            }
+            if ($this->wire('modules')->isInstalled('FieldtypeColor')) {
+                $options['InputfieldColor'] = 'FieldtypeColor';
+            }
+
+            /* @var InputfieldSelect $f */
+            $f = $modules->InputfieldSelect;
+            $f->attr('id+name', 'input_module_color_inputfield');
+            $f->label = $this->_('Select the inputfield for colors');
+            $f->addOptions($options);
+            $f->notes = $this->_('Please select your preferred input type for color input fields.');
+            $f->value = $this->input_module_color_inputfield;
+            $f->required = true;
+            $inputfields->add($f);
+        }
 
         /* @var InputfieldText $f */
         $f = $modules->InputfieldText;
-        $f_name = 'text';
-        $f->name = $f_name;
+        $f->attr('id+name', 'input_text');
         $f->label = $this->_('Default placeholder text');
         $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
-        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method.');
-        $f->useLanguages = true;
-        $f->value = $this->$f_name;
-
-        if ($languages) {
-            $f->useLanguages = true;
-            foreach ($languages as $language) {
-                if ($language->isDefault()) {
-                    continue;
-                } else {
-                    $f->set("value$language", (string) $this->get("timeformat$language"));
-                }
-            }
+        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method or disable it with the noText() method.');
+        if ($this->wire('modules')->isInstalled('LanguageSupport')) {
+            $this->setLanguageValue('input_text', $f);
+        } else {
+            $f->value = $this->input_text;
         }
         $f->collapsed = Inputfield::collapsedBlank;
         $inputfields->add($f);
 
-        /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
-        $f_name = 'background_color';
-        $f->name = $f_name;
+        $fieldtype = $this->input_module_color_inputfield;
+
+        /* @var Inputfield $f */
+        $f = $modules->$fieldtype;
+        $f->value = $this->input_background_color;
+        $f->swatch = $this->input_background_color;
+        $f->attr('id+name', 'input_background_color');
         $f->label = $this->_('Default background color');
-        $f->description = $this->_('Enter a default color for the image background in hexadecimal code (fe #dddddd). Leaving this field blank means a transparent background.');
-        $f->value = $this->$f_name;
+        $f->description = $this->_('Enter a default color for the image background in hexadecimal code (fe #dddddd).');
+        $f->notes = $this->_('No color/transparent color means that the image has a transparent background.');
         $f->collapsed = Inputfield::collapsedBlank;
         $inputfields->add($f);
 
-
-        /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
-        $f_name = 'text_color';
-        $f->name = $f_name;
+        /* @var Inputfield $f */
+        $f = $modules->$fieldtype;
+        $f->value = $this->input_text_color;
+        $f->swatch = $this->input_text_color;
+        $f->attr('id+name', 'input_text_color');
         $f->label = $this->_('Default text color');
-        $f->description = $this->_('Enter a default color for the text in hexadecimal code (fe #666666)');
-        $f->value = $this->$f_name ? $this->$f_name : self::$configDefaults[$f_name];
-        $f->notes = sprintf($this->_('Default value: %s'), self::$configDefaults[$f_name]);
-        $inputfields->add($f);
-
-        /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
-        $f_name = 'css_class';
-        $f->name = $f_name;
-        $f->label = $this->_('Default CSS class');
-        $f->description = $this->_('Enter a default CSS class for the placeholder image (fe placeholder)');
-        $f->value = $this->$f_name ? $this->$f_name : self::$configDefaults[$f_name];
-        $f->collapsed = Inputfield::collapsedBlank;
-        $inputfields->add($f);
-
-
-        /* @var InputfieldTextarea $f */
-        $f = $modules->InputfieldTextarea;
-        $f_name = 'font_files';
-        $f->name = $f_name;
-        $f->id = $f_name;
-        $f->value = $this->$f_name ? $this->$f_name : self::$configDefaults[$f_name];
-        $f->collapsed = Inputfield::collapsedHidden; // should be hidden
-        $inputfields->add($f);
-
-        /* @var InputfieldSelect $f */
-        $f = $modules->InputfieldSelect;
-        $f_name = 'font_family';
-        $f->name = $f_name;
-        $f->id = $f_name;
-        $f->label = $this->_('Default font family');
-        $f->value = $this->$f_name ? $this->$f_name : self::$configDefaults[$f_name];
-        $f->description = $this->_('Please select the default font');
-        $f->notes = sprintf($this->_('Default value: %s'), self::$configDefaults[$f_name] . '.ttf.   ');
-        $f->options = $this->createFontFamilySelect();
+        $f->description = $this->_('Enter a default color for the text in hexadecimal code (fe #666666).');
         $f->required = true;
+        $f->columnWidth = 50;
         $inputfields->add($f);
-
 
         /* @var InputfieldInteger $f */
         $f = $modules->InputfieldInteger;
-        $f_name = 'font_size';
-        $f->name = $f_name;
-        $f->id = $f_name;
-        $f->label = $this->_('Default font size');
-        $f->value = $this->$f_name ? $this->$f_name : self::$configDefaults[$f_name];
-        $f->notes = sprintf($this->_('Default value: %s'), self::$configDefaults[$f_name] . 'px');
+        $f->attr('id+name', 'input_font_size');
         $f->inputType = 'number';
+        $f->step = 1;
         $f->min = 1;
+        $f->label = $this->_('Default font size');
+        $f->value = $this->input_font_size;
+        $f->required = true;
+        $f->columnWidth = 50;
         $inputfields->add($f);
 
-        /** @var InputfieldFile﻿ ﻿$f */
+        /* @var Inputfield $f */
+        $f = $modules->$fieldtype;
+        $f->value = $this->input_shadow_color;
+        $f->swatch = $this->input_shadow_color;
+        $f->attr('id+name', 'input_shadow_color');
+        $f->label = $this->_('Default text shadow color');
+        $f->description = $this->_('Enter a default color for the text shadow in hexadecimal code (fe #ddd).');
+        $f->notes = $this->_('No color/transparent color means that text shadow is disabled.');
+        $f->columnWidth = 34;
+        $inputfields->add($f);
+
+        /* @var InputfieldInteger $f */
+        $f = $modules->InputfieldInteger;
+        $f->attr('id+name', 'input_x_offset');
+        $f->inputType = 'number';
+        $f->step = 1;
+        $f->label = $this->_('Default x-offset for the text shadow');
+        $f->value = $this->input_x_offset;
+        $f->required = true;
+        $f->columnWidth = 33;
+        $inputfields->add($f);
+
+        /* @var InputfieldInteger $f */
+        $f = $modules->InputfieldInteger;
+        $f->attr('id+name', 'input_y_offset');
+        $f->inputType = 'number';
+        $f->step = 1;
+        $f->label = $this->_('Default y-offset for the text shadow');
+        $f->value = $this->input_y_offset;
+        $f->required = true;
+        $f->columnWidth = 33;
+        $inputfields->add($f);
+
+        /* @var InputfieldText $f */
+        $f = $modules->InputfieldText;
+        $f->attr('id+name', 'input_css_class');
+        $f->label = $this->_('Default CSS class');
+        $f->description = $this->_('Enter a default CSS class for the placeholder image tag (fe placeholder).');
+        $f->value = $this->input_css_class;
+        $f->collapsed = Inputfield::collapsedBlank;
+        $inputfields->add($f);
+
+        /* @var InputFieldSubmit $f */
+        $fb = $modules->InputFieldsubmit;
+        $fb->attr('id+name', 'input_submit_refreshFonts');
+        $fb->label = $this->_('Scan project for new TTF');
+        $fb->value = 'refresh';
+        $fb->text = $this->_('Update font files');
+
+        // set description
+        $desc = str_replace('{out}',
+            $this->_('Click the button to start a complete project scan to update all TrueTypeFonts.'),
+            $markup['item_description']);
+        $fb->description = $desc;
+        // set notes
+        $notes = str_replace('{out}',
+            $this->_('New fonts will be added to the TTF-list above and fonts that no longer exist will be removed.'),
+            $markup['item_notes']);
+        $fb->notes = $notes;
+
+
+        // Select the font family
+        /* @var InputfieldRadios $f */
+        $f = $modules->InputfieldRadios;
+        $f->attr('id+name', 'input_font_family');
+        $f->label = $this->_('Default font family');
+        $f->value = $this->input_font_family;
+        $f->description = $this->_('Please select the default font family for the placeholder text.');
+        $f->notes = $this->_('The list above contains TrueTypeFonts which were found across the whole project (not only from inside the fonts folder of this module).');
+        foreach ($this->createFontFamilySelect() as $value => $label) {
+            $f->addOption($value, $label,
+                ['class' => 'font-option ' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
+        }
+        $f->required = true;
+
+        $f->appendMarkup('<hr>' . $fb->description . $fb->render() . $fb->notes);
+        $inputfields->add($f);
+
+        /** @var InputfieldFile $f */
         $f = $modules->InputfieldFile;
-        $f_name = 'font_upload';
-        $f->label = $this->_('Upload new font file');
-        $f->description = $this->_('Only true type font files are allowed');
-        $f->name = $f_name;
+        $f->attr('id+name', 'input_font_upload');
+        $f->label = $this->_('Upload new TrueTypeFonts');
+        $f->description = $this->_('Select the TrueTypeFont for the upload.');
         $f->extensions = 'ttf';
         $f->maxFiles = 1;
         $f->overwrite = true;
         $f->descriptionRows = 0;
-        $f->destinationPath = $this->wire('config')->paths->$this . 'fonts' . DIRECTORY_SEPARATOR;
+        $f->destinationPath = $this->pathToFonts;
+        if ($this->getAllCustomFonts()) {
+            $f->columnWidth = 50;
+        }
         $inputfields->add($f);
 
+        // Select TrueTypeFonts for deletion
+        /* @var InputfieldCheckboxes $f */
+        //if($this->getAllCustomFonts()){
+        $f = $modules->InputfieldCheckboxes;
+        $f->attr('id+name', 'input_delete_font_family');
+        $f->label = $this->_('Delete custom uploaded TrueTypeFont(s)');
+        $f->description = $this->_('Please select the TrueTypeFonts, which should be deleted.');
+        $f->notes = $this->_('Please note: To prevent unwanted deletion of fonts used by templates or other modules, only fonts that have been uploaded with this module can be selected for deletion.');
+        foreach ($this->getAllCustomFonts() as $value => $label) {
+            // check if the font is set as default font family. In this case set this checkbox to disabled
+            $attributes = [
+                'class' => 'delete-font-option ' . strtolower(pathinfo($value, PATHINFO_FILENAME)),
+            ];
+            if ($this->pwPath2url($value) == $this->input_font_family) {
+                $attributes['disabled'] = 'disabled';
+            }
+            $f->addOption($value, ucfirst($label), $attributes);
+        }
+        $f->columnWidth = 50;
+        $inputfields->add($f);
 
+        /**  $docFieldset */
+        $docFieldset = $this->wire('modules')->get('InputfieldFieldset');
+        $docFieldset->label = $this->_('How to');
+        $docFieldset->description = $this->_('This is a simple quick start guide on how to implement the placeholder image module in your templates.');
+        $docFieldset->collapsed = true;
+        $docFieldset->columnWidth = 100;
+
+        $text = '<h3>' . $this->_('Most simple integration') . '</h3>';
+        $text .= '<p>' . $this->_('Put this code inside your template, where the placeholder image should be displayed.') . '</p>';
+        $text .= '<pre><code>echo $modules->get(\'JkImagePlaceholder\');</code></pre>';
+        $text .= '<p>' . $this->_('In this case the image will be rendered according to the global settings in the module configuration.') . '</p>';
+        $text .= '<h3>' . $this->_('Advanced integration') . '</h3>';
+        $text .= '<p>' . $this->_('In most cases it is necessary to adapt the placeholder image to your needs.') . '</p>';
+
+        $text .= <<<'EOF'
+            <pre><code>
+            echo $modules->get('JkImagePlaceholder')
+            ->setText('Test!')
+            ->setAltText('My custom alt text for the image')
+            ->setFontSize(30)
+            ->setWidth(400)
+            ->setHeight(200)
+            ->setFontFamily('lobster-regular.ttf')
+            ->setShadowColor('#000')
+            ->setXOffset(-5)
+            ->setYOffset(1)
+            ->render(true);
+            </code></pre>
+            EOF;
+
+        $link = '<a target="_blank" href="' . self::getModuleInfo()['href'] . '">' . $this->_('Readme') . '</a>';
+        $text .= '<p>' . sprintf($this->_('For more information please take a look at the %s file on GitHub.'),
+                $link) . '</p>';
+        $description = $this->wire()->modules->get('InputfieldMarkup');
+        $description->markupText = $text;
+        $docFieldset->add($description);
+
+        $inputfields->add($docFieldset);
 
         return $inputfields;
     }
+
+    /**
+     * Run during install
+     * @return void
+     * @throws WireException
+     */
+    public function ___install(): void
+    {
+        // check if GD lib is installed
+        if (!extension_loaded('gd') && function_exists('gd_info')) {
+            throw new WireException("PHP GD library is NOT installed on your web server");
+        }
+        // run a system scan and find all TTF
+        $fontfiles = $this->findAllFontfiles();
+
+        // grab the default config data of the module
+        $data = self::getDefaultData();
+        // save all ttf fonts on installation to the db
+        $data['font_files'] = $fontfiles;
+        // set fjallaone-regular as default font
+        $data['input_font_family'] = $this->pwPath2url($this->pathToFonts . 'fjallaone-regular.ttf');
+        // save the config data to the db on install
+        wire('modules')->saveConfig($this, $data);
+        // create and save CSS file for the TTF
+        $this->createCSSFile($fontfiles);
+    }
+
+    /**
+     * Run during uninstall
+     * @return void
+     * @throws WireException
+     */
+    public function ___uninstall(): void
+    {
+        // remove CSS file jkplaceholderfont.css
+        $this->wire('files')->unlink($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css');
+    }
+
 }
