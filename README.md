@@ -150,4 +150,4 @@ The text for the placeholder can be set multilingual (in module configuration an
 By setting the text via setText() method in template, please use translatable strings(fe _('My text'))
 for multi-language text (same as in templates). Otherwise you can use a simple text string.
 
-`setText(_('My placeholder text))`
+`setText(_('My placeholder text'))`
