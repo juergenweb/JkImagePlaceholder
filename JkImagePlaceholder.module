@@ -76,10 +76,10 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         return [
             'input_module_color_inputfield' => 'InputfieldText',
-            'input_width' => '650',
-            'input_height' => null,
-            'input_font_size' => '14',
-            'input_background_color' => null,
+            'input_width' => '600',
+            'input_height' => '400',
+            'input_font_size' => '35',
+            'input_background_color' => '#dddddd',
             'input_shadow_color' => null,
             'input_x_offset' => '2',
             'input_y_offset' => '2',
@@ -984,19 +984,53 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             $inputfields->add($f);
         }
 
-        /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
-        $f->attr('id+name', 'input_text');
-        $f->label = $this->_('Default placeholder text');
-        $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
-        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method or disable it with the noText() method.');
-        if ($this->wire('modules')->isInstalled('LanguageSupport')) {
-            $this->setLanguageValue('input_text', $f);
-        } else {
-            $f->value = $this->input_text;
-        }
-        $f->collapsed = Inputfield::collapsedBlank;
-        $inputfields->add($f);
+        $sizesFieldset = $this->wire('modules')->get('InputfieldFieldset');
+        $sizesFieldset->label = $this->_('Global dimensions');
+        $sizesFieldset->collapsed = true;
+        $sizesFieldset->columnWidth = 100;
+
+        /* @var InputfieldInteger $f */
+        $f = $modules->InputfieldInteger;
+        $f->attr('id+name', 'input_width');
+        $f->inputType = 'number';
+        $f->step = 1;
+        $f->min = 1;
+        $f->label = $this->_('Default image width');
+        $f->value = $this->input_width;
+        $f->required = true;
+        $f->columnWidth = 33;
+        $sizesFieldset->add($f);
+
+        /* @var InputfieldInteger $f */
+        $f = $modules->InputfieldInteger;
+        $f->attr('id+name', 'input_height');
+        $f->inputType = 'number';
+        $f->step = 1;
+        $f->min = 1;
+        $f->label = $this->_('Default image height');
+        $f->value = $this->input_height;
+        $f->required = true;
+        $f->columnWidth = 33;
+        $sizesFieldset->add($f);
+
+        /* @var InputfieldInteger $f */
+        $f = $modules->InputfieldInteger;
+        $f->attr('id+name', 'input_font_size');
+        $f->inputType = 'number';
+        $f->step = 1;
+        $f->min = 1;
+        $f->label = $this->_('Default font size');
+        $f->value = $this->input_font_size;
+        $f->required = true;
+        $f->columnWidth = 34;
+        $sizesFieldset->add($f);
+
+        $inputfields->add($sizesFieldset);
+
+        $stylingFieldset = $this->wire('modules')->get('InputfieldFieldset');
+        $stylingFieldset->label = $this->_('Global styling');
+        $stylingFieldset->collapsed = true;
+        $stylingFieldset->columnWidth = 100;
 
         $fieldtype = $this->input_module_color_inputfield;
 
@@ -1008,8 +1042,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->label = $this->_('Default background color');
         $f->description = $this->_('Enter a default color for the image background in hexadecimal code (fe #dddddd).');
         $f->notes = $this->_('No color/transparent color means that the image has a transparent background.');
-        $f->collapsed = Inputfield::collapsedBlank;
-        $inputfields->add($f);
+        $stylingFieldset->add($f);
 
         /* @var Inputfield $f */
         $f = $modules->$fieldtype;
@@ -1019,20 +1052,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->label = $this->_('Default text color');
         $f->description = $this->_('Enter a default color for the text in hexadecimal code (fe #666666).');
         $f->required = true;
-        $f->columnWidth = 50;
-        $inputfields->add($f);
-
-        /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
-        $f->attr('id+name', 'input_font_size');
-        $f->inputType = 'number';
-        $f->step = 1;
-        $f->min = 1;
-        $f->label = $this->_('Default font size');
-        $f->value = $this->input_font_size;
-        $f->required = true;
-        $f->columnWidth = 50;
-        $inputfields->add($f);
+        $stylingFieldset->add($f);
 
         /* @var Inputfield $f */
         $f = $modules->$fieldtype;
@@ -1043,7 +1063,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->description = $this->_('Enter a default color for the text shadow in hexadecimal code (fe #ddd).');
         $f->notes = $this->_('No color/transparent color means that text shadow is disabled.');
         $f->columnWidth = 34;
-        $inputfields->add($f);
+        $stylingFieldset->add($f);
 
         /* @var InputfieldInteger $f */
         $f = $modules->InputfieldInteger;
@@ -1054,7 +1074,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->value = $this->input_x_offset;
         $f->required = true;
         $f->columnWidth = 33;
-        $inputfields->add($f);
+        $stylingFieldset->add($f);
 
         /* @var InputfieldInteger $f */
         $f = $modules->InputfieldInteger;
@@ -1065,16 +1085,39 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->value = $this->input_y_offset;
         $f->required = true;
         $f->columnWidth = 33;
+        $stylingFieldset->add($f);
+
+        $inputfields->add($stylingFieldset);
+
+        /* @var InputfieldText $f */
+        $f = $modules->InputfieldText;
+        $f->attr('id+name', 'input_text');
+        $f->label = $this->_('Global placeholder text');
+        $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
+        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method or disable it with the noText() method.');
+        if ($this->wire('modules')->isInstalled('LanguageSupport')) {
+            $this->setLanguageValue('input_text', $f);
+        } else {
+            $f->value = $this->input_text;
+        }
+        $f->collapsed = Inputfield::collapsedBlank;
         $inputfields->add($f);
+
 
         /* @var InputfieldText $f */
         $f = $modules->InputfieldText;
         $f->attr('id+name', 'input_css_class');
-        $f->label = $this->_('Default CSS class');
+        $f->label = $this->_('Global CSS class');
         $f->description = $this->_('Enter a default CSS class for the placeholder image tag (fe placeholder).');
         $f->value = $this->input_css_class;
         $f->collapsed = Inputfield::collapsedBlank;
         $inputfields->add($f);
+
+
+        $fontsFieldset = $this->wire('modules')->get('InputfieldFieldset');
+        $fontsFieldset->label = $this->_('Global font settings');
+        $fontsFieldset->collapsed = true;
+        $fontsFieldset->columnWidth = 100;
 
         /* @var InputFieldSubmit $f */
         $fb = $modules->InputFieldsubmit;
@@ -1110,7 +1153,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->required = true;
 
         $f->appendMarkup('<hr>' . $fb->description . $fb->render() . $fb->notes);
-        $inputfields->add($f);
+        $fontsFieldset->add($f);
 
         /** @var InputfieldFile $f */
         $f = $modules->InputfieldFile;
@@ -1125,7 +1168,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         if ($this->getAllCustomFonts()) {
             $f->columnWidth = 50;
         }
-        $inputfields->add($f);
+        $fontsFieldset->add($f);
 
         // Select TrueTypeFonts for deletion
         /* @var InputfieldCheckboxes $f */
@@ -1146,7 +1189,9 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             $f->addOption($value, ucfirst($label), $attributes);
         }
         $f->columnWidth = 50;
-        $inputfields->add($f);
+        $fontsFieldset->add($f);
+
+        $inputfields->add($fontsFieldset);
 
         /**  $docFieldset */
         $docFieldset = $this->wire('modules')->get('InputfieldFieldset');
@@ -1170,6 +1215,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             ->setFontSize(30)
             ->setWidth(400)
             ->setHeight(200)
+            ->setBackgroundColor('#ddd')
             ->setFontFamily('lobster-regular.ttf')
             ->setShadowColor('#000')
             ->setXOffset(-5)
