@@ -177,3 +177,5 @@ By setting the text via setText() method in template, please use translatable st
 for multi-language text (same as in templates). Otherwise you can use a simple text string.
 
 `setText(_('My placeholder text'))`
+
+This module will be also shipped with the German translation file.
