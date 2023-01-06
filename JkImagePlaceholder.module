@@ -9,8 +9,8 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 {
     protected array $fonts = [];
     protected string $input_module_color_inputfield = ''; // which inputfield should be used for the color inputs
-    protected string|int|null $input_width = ''; // the width of the placeholder image
-    protected string|int|null $input_height = ''; // the height of the placeholder image
+    protected string|int $input_width = ''; // the width of the placeholder image
+    protected string|int $input_height = ''; // the height of the placeholder image
     protected string|int $input_font_size = ''; // the font-size for the placeholder text in px
     protected string|null $input_background_color = ''; // the background-color as hex code string
     protected string|null $input_shadow_color = ''; // the text shadow-color as hex code string
@@ -502,7 +502,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      * Get the width of the placeholder image
      * @return int|null
      */
-    public function getWidth(): ?int
+    public function getWidth(): int
     {
         return (int)$this->input_width;
     }
@@ -524,9 +524,9 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      * Get the height of the placeholder image
      * @return int|null
      */
-    public function getHeight(): ?int
+    public function getHeight(): int
     {
-        return $this->input_height;
+        return (int)$this->input_height;
     }
 
     /**
@@ -638,7 +638,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function getXOffset(): int
     {
-        return $this->input_x_offset;
+        return (int)$this->input_x_offset;
     }
 
     /**
@@ -658,7 +658,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function getYOffset(): int
     {
-        return $this->input_y_offset;
+        return (int)$this->input_y_offset;
     }
 
     /**
