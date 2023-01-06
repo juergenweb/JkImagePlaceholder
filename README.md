@@ -37,11 +37,13 @@ Use these methods below to set a value or to overwrite default values from the m
 ### setTextColor() method
 
 Set a hexadecimal color for the text if you want to overwrite the default text color.
+
 `setTextColor('#990000')`
 
 ### setBackgroundColor() method
 
 Set a hexadecimal color for the background if you want to add or overwrite the background. On default there is no color set (transparent background).
+
 `setBackgroundColor('#000000')`
 
 ### setFontFamily() method
@@ -53,50 +55,62 @@ It does not matter if you add the extension or not.
 ### setWidth() method
 
 Set the width of the image in px.
+
 `setWidth(600)`
 
 ### setHeight() method
 
 Set the height of the image in px. If no height is set explicitly the height will be set to the value of the width.
+
 `setHeight(300)`
 
 ### setCSSClass() method
 
 Set or overwrite the CSS class of the image tag.
+
 `setCSSClass('my-image')`
 
 ### setFontSize() method
 
 Set the fontsize of the placeholder text in px (without entering the px inside the parenthesis).
+
 `setFontSize(30)`
 
 ### noText() method
 
 Suppress the output of text inside the placeholder image if a text was set in the global settings.
+
 `noText()`
 
 ### setShadowColor() method
 
 Set a hexadecimal color for the text if you want to add a shadow to the text.
+
 `setShadowColor('#990000')`
 
 If you want to disable the shadow, do not add a HEX code inside the parenthesis.
+
 `setShadowColor()`
 
 ### setXOffset() method
 
 Set the offset for the x-coordinate of the text shadow. You can enter positive and negative values
+
 `setXOffset(3)`
+
 Offset is 3px in this case.
 
 ### setYOffset() method
 
 Set the offset for the y-coordinate of the text shadow. You can enter positive and negative values
+
 `setYOffset(3)`
+
 Offset is 3px in this case.
 
 ### setAltText() method
 With this method you can change the alt attribute of the image tag.
+
 `setAltText('my custom alt text')`
 
 
@@ -104,9 +118,14 @@ With this method you can change the alt attribute of the image tag.
 
 ### Usage with default values from the module configuration (only the size of the image will be set manually)
 
-`echo $modules->JkImagePlaceholder->setWidth(800)->setHeight(400)->render();`
+`echo $modules->JkImagePlaceholder->render();`
 
-This will output the img src as base64 string. In this case you have to write the image tag by yourself.
+or
+
+`echo $modules->JkImagePlaceholder->render(true);`
+
+The first code outputs the img src as base64 string. In this case you have to write the image tag by yourself.
+The second one with boolean true as parameter renders the complete image tag.
 
 ### Usage with all parameters set individually (global values will be overwritten)
 
