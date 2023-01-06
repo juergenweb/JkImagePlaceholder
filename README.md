@@ -2,11 +2,11 @@
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
-Benefits:
+Features:
 
 - 2 TTFs are shipped with this module by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). 
 - Allows upload and deletion of other fonts
-- Allows scanning the complete site to find and use other TruetypeFonts (fe used by templates or other modules)
+- Allows scanning of the complete site to find and use other TruetypeFonts (fe used by templates or other modules)
 - Preview of all fonts in the select font input field - you can see how the font looks like
 - Global setting of various colors: background color, text color,..
 - Supports adding of text shadow to the placeholder text
@@ -124,7 +124,7 @@ or
 
 `echo $modules->JkImagePlaceholder->render(true);`
 
-The first code outputs the img src as base64 string. In this case you have to write the image tag by yourself.
+The first code outputs the image src as base64 string. In this case, you have to write the image tag by yourself.
 The second one with boolean true as parameter renders the complete image tag.
 
 ### Usage with all parameters set individually (global values will be overwritten)
@@ -152,7 +152,7 @@ image src only.
 ## Select field type for input field color
 If you have installed FieldtypeColor and/or FieldtypeColorPicker you can select if you want to use one of these field types
 or not.
-Otherwise an InputfieldText will be displayed for entering color values for text, background and shadow color.
+Otherwise, an InputfieldText will be displayed for entering color values for text, background and shadow color.
 
 1) Simple text input
 ![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/text-input.jpg?raw=true)
@@ -174,8 +174,8 @@ you want to use.
 
 The text for the placeholder can be set multilingual (in module configuration and via setText() method).
 By setting the text via setText() method in template, please use translatable strings(fe _('My text'))
-for multi-language text (same as in templates). Otherwise you can use a simple text string.
+for multi-language text (same as in templates). Otherwise, you can use a simple text string.
 
 `setText(_('My placeholder text'))`
 
-This module will be also shipped with the German translation file.
+This module will be shipped with the German translation file.
