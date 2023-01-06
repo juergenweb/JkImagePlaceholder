@@ -1197,6 +1197,8 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function ___install(): void
     {
+        // create assets folder for CSS file
+        $this->wire('files')->mkdir($this->wire('config')->paths->$this . 'assets/');
         // check if GD lib is installed
         if (!extension_loaded('gd') && function_exists('gd_info')) {
             throw new WireException("PHP GD library is NOT installed on your web server");
@@ -1223,8 +1225,8 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function ___uninstall(): void
     {
-        // remove CSS file jkplaceholderfont.css
-        $this->wire('files')->unlink($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css');
+        // delete assets directory with CSS file
+        $this->wire('files')->rmdir($this->wire('config')->paths->$this . 'assets/', true);
     }
 
 }
