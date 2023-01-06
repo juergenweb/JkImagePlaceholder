@@ -80,7 +80,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             'input_height' => '400',
             'input_font_size' => '35',
             'input_background_color' => '#dddddd',
-            'input_shadow_color' => null,
+            'input_shadow_color' => '#ffffff',
             'input_x_offset' => '2',
             'input_y_offset' => '2',
             'input_css_class' => '',
