@@ -30,6 +30,7 @@ Benefits:
 - setShadowColor()
 - setXOffset()
 - setYOffset()
+- setAltText()
 
 Use these methods below to set a value or to overwrite default values from the module configuration.
 
@@ -94,6 +95,10 @@ Set the offset for the y-coordinate of the text shadow. You can enter positive a
 `setYOffset(3)`
 Offset is 3px in this case.
 
+### setAltText() method
+With this method you can change the alt attribute of the image tag.
+`setAltText('my custom alt text')`
+
 
 ## Examples for usage in templates
 
@@ -105,18 +110,20 @@ This will output the img src as base64 string. In this case you have to write th
 
 ### Usage with all parameters set individually (global values will be overwritten)
 
-`echo $modules->JkImagePlaceholder
-->setFontSize(30)
-->setWidth(800)
-->setHeight(400)
-->setBackgroundColor('#dddddd')
-->setTextColor('#000000')
-->setText('My placeholder text')
-->setFontFamily('pacifico.ttf')
-->setShadowColor('#666666')
-->setXOffset(-1)
-->setYOffset(1)
-->render(true);`
+
+
+    echo $modules->JkImagePlaceholder
+    ->setFontSize(30)         
+    ->setWidth(800)    
+    ->setHeight(400)
+    ->setBackgroundColor('#dddddd')
+    ->setTextColor('#000000')
+    ->setText('My placeholder text')
+    ->setFontFamily('pacifico.ttf')
+    ->setShadowColor('#666666')
+    ->setXOffset(-1)
+    ->setYOffset(1)
+    ->render(true);
 
 Take a look at the render method, which includes true as a boolean parameter.
 This means that a complete image tag will be rendered instead of only the src value.
