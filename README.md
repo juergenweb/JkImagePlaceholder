@@ -2,7 +2,7 @@
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
-Benefits:
+Features:
 
 - 2 TTFs are shipped with this module by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). 
 - Allows upload and deletion of other fonts
