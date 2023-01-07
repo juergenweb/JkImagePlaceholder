@@ -59,6 +59,10 @@ Set a hexadecimal color for the background if you want to add or overwrite the b
 
 `setBackgroundColor('#000000')`
 
+If you want to remove the background color to get a transparent background, do not add a hexadecimal code inside the parenthesis.
+
+`setBackgroundColor()`
+
 ### setFontFamily() method
 
 Set the name of the Font-Family that should be used. You can only use fonts that you will find inside the font family select inside the module configuration. If you enter a font family name that does not exist, the default font-family will be used instead.
