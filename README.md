@@ -104,7 +104,7 @@ Set the offset for the x-coordinate of the text shadow. You can enter positive a
 
 `setXOffset(3)`
 
-Offset is 3px in this case.
+Offset on the x-axis is 3px in this case.
 
 ### setYOffset() method
 
@@ -112,7 +112,7 @@ Set the offset for the y-coordinate of the text shadow. You can enter positive a
 
 `setYOffset(3)`
 
-Offset is 3px in this case.
+Offset on the y-axis is 3px in this case.
 
 ### setAltText() method
 With this method you can change the alt attribute of the image tag.
