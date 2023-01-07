@@ -3,26 +3,24 @@ declare(strict_types=1);
 
 namespace ProcessWire;
 
+/**
+ *
+ * JKImagePlaceholder
+ *
+ * @author Jürgen K.
+ * @copyright Copyright (c) 2023
+ * @see http://www.processwire.com
+ */
+
 use Exception;
 
 class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 {
-    protected array $fonts = [];
-    protected string $input_module_color_inputfield = ''; // which inputfield should be used for the color inputs
-    protected string|int $input_width = ''; // the width of the placeholder image
-    protected string|int $input_height = ''; // the height of the placeholder image
-    protected string|int $input_font_size = ''; // the font-size for the placeholder text in px
-    protected string|null $input_background_color = ''; // the background-color as hex code string
-    protected string|null $input_shadow_color = ''; // the text shadow-color as hex code string
-    protected string|int $input_x_offset = ''; // the x-offset for the text shadow in px
-    protected string|int $input_y_offset = ''; // the y-offset for the text shadow in px
-    protected string $input_css_class = '';  // the css class for the placeholder image tag
-    protected string $input_text_color = ''; // the text-color as hex code string
-    protected string $input_font_family = ''; // the name of the text font
-    protected string|array $font_files = []; // // array the holds all font-files that were found inside the project
-    protected string|null $input_text = ''; // the custom text for the placeholder image
-    protected string $input_defaultText = ''; // the default text for the placeholder image
-    protected array $moduleConfig = []; // the module configuration
+
+    /*
+     * Declare all properties which have no corresponding input field in the module configuration page
+     * and therefore will not be defined inside the getDefaultData() method later on
+     */
     protected string $pathToFonts = ''; // the path to the font folder of the module
     protected string $altText = ''; // the alternative text for the alt attribute of the image tag
     protected bool $no_text = false; // hide text on placeholder image
@@ -52,18 +50,15 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         parent::__construct();
 
-        // grab the module configuration from the db and add it to the moduleConfig property
-        $this->moduleConfig = $this->wire('modules')->getConfig($this);
-
-        // set the value of each property according to the configuration setting from DB
-        foreach ($this->moduleConfig as $key => $value) {
+        // create a property of each item according to the configuration setting from DB
+        foreach ($this->wire('modules')->getConfig($this) as $key => $value) {
             $this->$key = $value;
         }
 
-        // set the default alternative text for the alt attribute of the image tag
+        // set the default alternative text for the alt attribute of the image tag in multi-language
         $this->setAltText($this->_('Placeholder image'));
 
-        // set path to the font folder
+        // set path to the font folder inside this module directory
         $this->pathToFonts = $this->wire('config')->paths->$this . 'fonts/';
 
     }
@@ -76,19 +71,18 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         return [
             'input_module_color_inputfield' => 'InputfieldText',
-            'input_width' => '600',
-            'input_height' => '400',
-            'input_font_size' => '35',
+            'input_width' => 600,
+            'input_height' => 400,
+            'input_font_size' => 35,
             'input_background_color' => '#dddddd',
             'input_shadow_color' => '#ffffff',
-            'input_x_offset' => '2',
-            'input_y_offset' => '2',
+            'input_x_offset' => 2,
+            'input_y_offset' => 2,
             'input_css_class' => '',
             'input_text_color' => '#666666',
             'input_font_family' => '',
-            'font_files' => '',
-            'input_text' => '',
-            'input_defaultText' => ''
+            'font_files' => [],
+            'input_text' => ''
         ];
     }
 
@@ -504,7 +498,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function getWidth(): int
     {
-        return (int)$this->input_width;
+        return $this->input_width;
     }
 
     /**
@@ -526,7 +520,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function getHeight(): int
     {
-        return (int)$this->input_height;
+        return $this->input_height;
     }
 
     /**
@@ -638,7 +632,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function getXOffset(): int
     {
-        return (int)$this->input_x_offset;
+        return $this->input_x_offset;
     }
 
     /**
@@ -658,7 +652,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function getYOffset(): int
     {
-        return (int)$this->input_y_offset;
+        return $this->input_y_offset;
     }
 
     /**
@@ -1202,7 +1196,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
         $text = '<h3>' . $this->_('Most simple integration') . '</h3>';
         $text .= '<p>' . $this->_('Put this code inside your template, where the placeholder image should be displayed.') . '</p>';
-        $text .= '<pre><code>echo $modules->get(\'JkImagePlaceholder\')->render(true);</code></pre>';
+        $text .= '<pre><code>echo $modules->get(\'JkImagePlaceholder\');</code></pre>';
         $text .= '<p>' . $this->_('In this case the image will be rendered according to the global settings in the module configuration.') . '</p>';
         $text .= '<h3>' . $this->_('Advanced integration') . '</h3>';
         $text .= '<p>' . $this->_('In most cases it is necessary to adapt the placeholder image to your needs.') . '</p>';
