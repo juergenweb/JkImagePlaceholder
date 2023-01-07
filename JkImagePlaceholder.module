@@ -99,7 +99,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $this->addHookBefore('ProcessModule::executeEdit', $this, 'scanProject');
 
         // add CSS for fonts to the backend
-        $version = $this->getModuleInfo()['version'].'-'.time();
+        $version = $this->getModuleInfo()['version'] . '-' . time();
         $this->wire('config')->styles->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.css?v=' . $version);
 
     }
@@ -229,6 +229,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function addFont(HookEvent $event): void
     {
+
         if ($event->object->name === 'input_font_upload') {
             // get all font TTF-files in the fonts directory of this module
             $ttf_files = $this->wire('files')->find($this->pathToFonts, ['extensions' => ['ttf', 'TTF']]);
@@ -257,6 +258,8 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
             //check if a new font has been uploaded
             $font_session = $this->wire('session')->get('addfonts');
+
+
             // add the new font file from the addFont() method to the data array for storing it in the db afterwards
             if ($font_session) {
                 $diff = array_diff($font_session,
@@ -270,8 +273,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             $this->wire('session')->remove('addfonts');
 
             // check if files were marked to delete
-            if (isset($data['input_delete_font_family']) && (!empty($data['input_delete_font_family']))) {
-
+            if (isset($_POST['input_delete_font_family'])) {
                 $labels = [];
                 $files = $data['font_files']; // all files as stored inside the database
                 foreach ($data['input_delete_font_family'] as $font) {
@@ -1093,7 +1095,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->collapsed = Inputfield::collapsedBlank;
         $inputfields->add($f);
 
-
         $fontsFieldset = $this->wire('modules')->get('InputfieldFieldset');
         $fontsFieldset->label = $this->_('Global font settings');
         $fontsFieldset->collapsed = true;
@@ -1135,6 +1136,8 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->appendMarkup('<hr>' . $fb->description . $fb->render() . $fb->notes);
         $fontsFieldset->add($f);
 
+        $inputfields->add($fontsFieldset);
+
         /** @var InputfieldFile $f */
         $f = $modules->InputfieldFile;
         $f->attr('id+name', 'input_font_upload');
@@ -1145,33 +1148,35 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->overwrite = true;
         $f->descriptionRows = 0;
         $f->destinationPath = $this->pathToFonts;
+        /*
         if ($this->getAllCustomFonts()) {
             $f->columnWidth = 50;
-        }
-        $fontsFieldset->add($f);
+        }*/
+        $inputfields->add($f);
 
         // Select TrueTypeFonts for deletion
         /* @var InputfieldCheckboxes $f */
-        //if($this->getAllCustomFonts()){
-        $f = $modules->InputfieldCheckboxes;
-        $f->attr('id+name', 'input_delete_font_family');
-        $f->label = $this->_('Delete custom uploaded TrueTypeFont(s)');
-        $f->description = $this->_('Please select the TrueTypeFonts, which should be deleted.');
-        $f->notes = $this->_('Please note: To prevent unwanted deletion of fonts used by templates or other modules, only fonts that have been uploaded with this module can be selected for deletion.');
-        foreach ($this->getAllCustomFonts() as $value => $label) {
-            // check if the font is set as default font family. In this case set this checkbox to disabled
-            $attributes = [
-                'class' => 'delete-font-option ' . strtolower(pathinfo($value, PATHINFO_FILENAME)),
-            ];
-            if ($this->pwPath2url($value) == $this->input_font_family) {
-                $attributes['disabled'] = 'disabled';
-            }
-            $f->addOption($value, ucfirst($label), $attributes);
-        }
-        $f->columnWidth = 50;
-        $fontsFieldset->add($f);
+        if ($this->getAllCustomFonts()) {
+            $f = $modules->InputfieldCheckboxes;
+            $f->attr('id+name', 'input_delete_font_family');
+            $f->label = $this->_('Delete custom uploaded TrueTypeFont(s)');
+            $f->description = $this->_('Please select the TrueTypeFonts, which should be deleted.');
+            $f->notes = $this->_('Please note: To prevent unwanted deletion of fonts used by templates or other modules, only fonts that have been uploaded with this module can be selected for deletion.');
 
-        $inputfields->add($fontsFieldset);
+            foreach ($this->getAllCustomFonts() as $value => $label) {
+                // check if the font is set as default font family. In this case set this checkbox to disabled
+                $attributes = [
+                    'class' => 'delete-font-option ' . strtolower(pathinfo($value, PATHINFO_FILENAME)),
+                ];
+                if ($this->pwPath2url($value) == $this->input_font_family) {
+                    $attributes['disabled'] = 'disabled';
+                }
+                $f->addOption($value, ucfirst($label), $attributes);
+            }
+
+            $inputfields->add($f);
+        }
+
 
         /**  $docFieldset */
         $docFieldset = $this->wire('modules')->get('InputfieldFieldset');
