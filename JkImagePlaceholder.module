@@ -720,17 +720,13 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         // check if file exists inside the database
         $key = array_search($fontfamily, $fontfiles);
         if ($key) {
-            
             // check if physical file exists under the given path too
-            /*
-            if ($this->wire('files')->exists($key)) {
+            if ($this->wire('files')->exists($this->wire('config')->paths->root.$key)) {
                 $this->input_font_family = $key;
             } else {
                 // start a new site search and update all fonts
                 $this->searchAndSave();
-            }*/
-            
-            $this->input_font_family = $key;
+            }
         } else {
             $this->searchAndSave(); // do a site search first
             // convert all uppercase letters to lowercase
