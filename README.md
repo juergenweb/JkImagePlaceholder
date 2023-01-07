@@ -19,17 +19,17 @@ Benefits:
 
 ## Public methods to set/change properties manually
 - setTextColor(string)
-- setBackgroundColor(string)
+- setBackgroundColor(string|null)
 - setWidth(int)
 - setHeight(int)
 - setFontFamily(string)
 - setFontSize(int)
-- setText(string)
+- setText(string|null)
 - setCSSClass(string)
-- setShadowColor()
-- setXOffset()
-- setYOffset()
-- setAltText()
+- setShadowColor(string)
+- setXOffset(int)
+- setYOffset(int)
+- setAltText(string)
 
 Use these methods below to set a value or to overwrite default values from the module configuration.
 
