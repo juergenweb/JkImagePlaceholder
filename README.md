@@ -2,11 +2,11 @@
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
-Features:
+Benefits:
 
 - 2 TTFs are shipped with this module by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). 
 - Allows upload and deletion of other fonts
-- Allows scanning of the complete site to find and use other TruetypeFonts (fe used by templates or other modules)
+- Allows scanning the complete site to find and use other TrueTypeFonts (fe used by templates or other modules)
 - Preview of all fonts in the select font input field - you can see how the font looks like
 - Global setting of various colors: background color, text color,..
 - Supports adding of text shadow to the placeholder text
@@ -26,13 +26,25 @@ Features:
 - setFontSize(int)
 - setText(string)
 - setCSSClass(string)
-- noText()
 - setShadowColor()
 - setXOffset()
 - setYOffset()
 - setAltText()
 
 Use these methods below to set a value or to overwrite default values from the module configuration.
+
+### setText() method
+With this method you can overwrite the global placeholder text or you can disable the output of any text.
+If you have a multilingual site please use translatable strings(fe _('My text')) as value.
+
+`setText(_('My placeholder text'))`
+
+If you want to disable the output of the text, use this method without a parameter inside the parenthesis.
+
+`setText()`
+
+In this case only the image without text inside will be rendered, independent if a global placeholder text was set set in 
+the backend or not.
 
 ### setTextColor() method
 
@@ -76,12 +88,6 @@ Set the fontsize of the placeholder text in px (without entering the px inside t
 
 `setFontSize(30)`
 
-### noText() method
-
-Suppress the output of text inside the placeholder image if a text was set in the global settings.
-
-`noText()`
-
 ### setShadowColor() method
 
 Set a hexadecimal color for the text if you want to add a shadow to the text.
@@ -124,7 +130,7 @@ or
 
 `echo $modules->JkImagePlaceholder->render(true);`
 
-The first code outputs the image src as base64 string. In this case, you have to write the image tag by yourself.
+The first code outputs the img src as base64 string. In this case you have to write the image tag by yourself.
 The second one with boolean true as parameter renders the complete image tag.
 
 ### Usage with all parameters set individually (global values will be overwritten)
@@ -172,10 +178,4 @@ you want to use.
 
 ## Multi-language
 
-The text for the placeholder can be set multilingual (in module configuration and via setText() method).
-By setting the text via setText() method in template, please use translatable strings(fe _('My text'))
-for multi-language text (same as in templates). Otherwise, you can use a simple text string.
-
-`setText(_('My placeholder text'))`
-
-This module will be shipped with the German translation file.
+This module will be also shipped with the German translation file.
