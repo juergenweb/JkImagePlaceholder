@@ -156,10 +156,6 @@ The second one with boolean true as parameter renders the complete image tag.
     ->setYOffset(1)
     ->render(true);
 
-Take a look at the render method, which includes true as a boolean parameter.
-This means that a complete image tag will be rendered instead of only the src value.
-So if you enter true as parameter inside the parenthesis, a whole image tag will be rendered instead of the
-image src only.
 
 ## Select field type for input field color
 If you have installed FieldtypeColor and/or FieldtypeColorPicker you can select if you want to use one of these field types
