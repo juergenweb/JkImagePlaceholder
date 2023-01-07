@@ -36,7 +36,7 @@ Use these methods below to set a value or to overwrite default values from the m
 ### setText() method
 With this method you can set or overwrite the global placeholder text or you can disable the output of any text.
 If you have a multilingual site please use translatable strings(fe _('My text')) as value.
-By default, there is no placeholder text set after you have installed the module. You have to enter one inside the module configuration.
+By default, there is no placeholder text set after you have installed the module.
 
 `setText(_('My placeholder text'))`
 
