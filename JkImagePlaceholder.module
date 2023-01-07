@@ -23,7 +23,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected string $pathToFonts = ''; // the path to the font folder of the module
     protected string $altText = ''; // the alternative text for the alt attribute of the image tag
-    protected bool $no_text = false; // hide text on placeholder image
 
     /**
      * @return array
@@ -99,10 +98,9 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $this->addHookBefore('Modules::saveConfig', $this, 'deleteFonts');
         $this->addHookBefore('ProcessModule::executeEdit', $this, 'scanProject');
 
-        // add CSS and JS to the backend
+        // add CSS for fonts to the backend
         $version = $this->getModuleInfo()['version'].'-'.time();
         $this->wire('config')->styles->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.css?v=' . $version);
-        $this->wire('config')->scripts->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.js?v=' . $version);
 
     }
 
@@ -123,16 +121,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     }
 
     /**
-     * Suppress output of text, if a text has been added before
-     * @return $this
-     */
-    public function noText(): self
-    {
-        $this->no_text = true;
-        return $this;
-    }
-
-    /**
      * Convert absolute path into relative url
      * @param string $filename
      * @param null $extension
@@ -149,7 +137,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     /**
      * Find all ttf fonts inside the project that can be used for the placeholder text
      * Scans the complete project for TrueTypeFonts and returns all files as an array
-     * with path as key and font name as value
+     * with path to the font as key and font name as value
      * @return array
      * @throws WireException
      */
@@ -586,7 +574,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function getTextColor(): string
     {
-
         return $this->addHashTagToString($this->input_text_color);
     }
 
@@ -660,13 +647,12 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      * @param string|null $text
      * @return self
      */
-    public function setText(?string $text): self
+    public function setText(?string $text = null): self
     {
         if (($text != null) || ($text != '')) {
-            $this->input_text = trim($text);
-        } else {
-            $this->input_text = null;
+            $text = trim($text);
         }
+        $this->input_text = $text;
         return $this;
     }
 
@@ -867,7 +853,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             imagesavealpha($image, true);
         }
 
-        if (!$this->no_text) {
+        if (!is_null($this->input_text)) {
             // set the text color for the image text
             list($r, $g, $b) = sscanf($this->getTextColor(), '#%02x%02x%02x');
             $text_color = imagecolorallocate($image, $r, $g, $b);
@@ -1088,7 +1074,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->attr('id+name', 'input_text');
         $f->label = $this->_('Global placeholder text');
         $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
-        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method or disable it with the noText() method.');
+        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method.');
         if ($this->wire('modules')->isInstalled('LanguageSupport')) {
             $this->setLanguageValue('input_text', $f);
         } else {
