@@ -137,11 +137,10 @@ or
 
 `echo $modules->JkImagePlaceholder->render(true);`
 
-The first code outputs the img src as base64 string. In this case you have to write the image tag by yourself.
+The first code outputs the image src value as base64 string. In this case you have to write the image tag by yourself.
 The second one with boolean true as parameter renders the complete image tag.
 
 ### Usage with all parameters set individually (global values will be overwritten)
-
 
 
     echo $modules->JkImagePlaceholder
