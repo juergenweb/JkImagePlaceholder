@@ -44,7 +44,7 @@ If you want to disable the output of the text, use this method without a paramet
 
 `setText()`
 
-In this case only the image without text inside will be rendered, independent if a global placeholder text was set set in 
+In this case only the image without text inside will be rendered, independent if a global placeholder text was set in 
 the backend or not.
 
 ### setTextColor() method
