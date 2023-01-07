@@ -101,7 +101,7 @@ Set a hexadecimal color for the text if you want to add a shadow to the text.
 
 `setShadowColor('#990000')`
 
-If you want to disable the shadow, do not add a HEX code inside the parenthesis.
+If you want to disable the shadow, do not add a hexadecimal code inside the parenthesis.
 
 `setShadowColor()`
 
