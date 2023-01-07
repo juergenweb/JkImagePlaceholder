@@ -1183,7 +1183,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
         $text = '<h3>' . $this->_('Most simple integration') . '</h3>';
         $text .= '<p>' . $this->_('Put this code inside your template, where the placeholder image should be displayed.') . '</p>';
-        $text .= '<pre><code>echo $modules->get(\'JkImagePlaceholder\');</code></pre>';
+        $text .= '<pre><code>echo $modules->get(\'JkImagePlaceholder\')->render(true);</code></pre>';
         $text .= '<p>' . $this->_('In this case the image will be rendered according to the global settings in the module configuration.') . '</p>';
         $text .= '<h3>' . $this->_('Advanced integration') . '</h3>';
         $text .= '<p>' . $this->_('In most cases it is necessary to adapt the placeholder image to your needs.') . '</p>';
