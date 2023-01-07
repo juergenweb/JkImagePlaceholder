@@ -55,7 +55,7 @@ Set a hexadecimal color for the text if you want to overwrite the default text c
 
 ### setBackgroundColor() method
 
-Set a hexadecimal color for the background if you want to add or overwrite the background. On default there is no color set (transparent background).
+Set a hexadecimal color for the background if you want to add or overwrite the background.
 
 `setBackgroundColor('#000000')`
 
