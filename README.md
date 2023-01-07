@@ -11,7 +11,7 @@ Features:
 - Global setting of various colors: background color, text color,..
 - Supports adding of text shadow to the placeholder text
 - Set global placeholder text (multi-language)
-- Set global image tag CSS class for the placeholder image tag
+- Set global CSS class for the placeholder image tag
 - If you have installed FieldtypeColor or FieldtypeColorPicker you can select if you want to use one of these fields for color inputs instead of a text input.
 
 ![Placeholderimage](https://raw.githubusercontent.com/juergenweb/JkImagePlaceholder/master/images/placeholderimage.jpg?raw=true)
