@@ -203,7 +203,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
                         src: url(\'' . $pathToFont . '\');
                     }
 
-                    .' . $font_name . ' {
+                    .css-' . $font_name . ' {
                         font-family: ' . $font_name . ';
                     }
                     
@@ -1129,7 +1129,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->notes = $this->_('The list above contains TrueTypeFonts which were found across the whole project (not only from inside the fonts folder of this module).');
         foreach ($this->createFontFamilySelect() as $value => $label) {
             $f->addOption($value, $label,
-                ['class' => 'font-option ' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
+                ['class' => 'font-option css-' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
         }
         $f->required = true;
 
@@ -1148,10 +1148,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->overwrite = true;
         $f->descriptionRows = 0;
         $f->destinationPath = $this->pathToFonts;
-        /*
-        if ($this->getAllCustomFonts()) {
-            $f->columnWidth = 50;
-        }*/
         $inputfields->add($f);
 
         // Select TrueTypeFonts for deletion
