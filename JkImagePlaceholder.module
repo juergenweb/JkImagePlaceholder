@@ -1074,7 +1074,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->attr('id+name', 'input_text');
         $f->label = $this->_('Global placeholder text');
         $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
-        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite it with setText() method.');
+        $f->notes = $this->_('This text will be added to all placeholder images by default, unless you overwrite or disable it with the setText() method.');
         if ($this->wire('modules')->isInstalled('LanguageSupport')) {
             $this->setLanguageValue('input_text', $f);
         } else {
