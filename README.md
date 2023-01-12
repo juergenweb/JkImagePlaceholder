@@ -2,7 +2,13 @@
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
-Features:
+## Usage
+My intention was to use create "real" placeholder images for products, user images and others that will be displayed to real site users if an image is missign. I did not want to use to much different font families on a site. For this reason I thought that it would be pretty cool to be able to use the same font for the text inside the placeholder image as used for the text of the site. This is possible with this module.
+
+Another aspect was that a "real image" could be used without problems with CSS frameworks componentes, whenever an image is needed (but not present). I am thinking fe of the comment component of the UiKit framework. In the markup you will need an image tag for the user image. 
+So you can use this module whenever a "real" image (page element with img tag) will be needed, but no image is present at the moment.
+
+## Features
 
 - 2 TTFs are shipped with this module by default (FjallaOne-Regular.ttf and Lobster-Regular.ttf). 
 - Allows upload and deletion of other fonts
