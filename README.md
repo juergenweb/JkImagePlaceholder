@@ -72,7 +72,7 @@ If you want to remove the background color to get a transparent background, do n
 
 ### setFontFamily() method
 
-Set the name of the Font-Family that should be used. You can only use fonts that you will find inside the font family select inside the module configuration. If you enter a font family name that does not exist, an error message occure.
+Set the name of the Font-Family that should be used. You can only use fonts that you will find inside the font family select inside the module configuration. If you enter a font family name that does not exist, an error message occurs.
 
 `setFontFamily('myFont')` or `setFontFamily('myFont.ttf')`.
 
