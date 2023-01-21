@@ -114,7 +114,7 @@ If you want to disable the shadow, do not add a hexadecimal code inside the pare
 
 ### setXOffset() method
 
-Set the offset for the x-coordinate of the text shadow. You can enter positive and negative values
+Set the offset for the x-coordinate of the text shadow. You can enter positive or negative values
 
 `setXOffset(3)`
 
@@ -122,7 +122,7 @@ Offset on the x-axis is 3px in this case.
 
 ### setYOffset() method
 
-Set the offset for the y-coordinate of the text shadow. You can enter positive and negative values
+Set the offset for the y-coordinate of the text shadow. You can enter positive or negative values
 
 `setYOffset(3)`
 
