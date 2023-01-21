@@ -1190,6 +1190,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             <pre><code>
             echo $modules->get('JkImagePlaceholder')
             ->setText('Test!')
+            ->setCSSClass('placeholder-class')
             ->setAltText('My custom alt text for the image')
             ->setFontSize(30)
             ->setWidth(400)
