@@ -154,6 +154,7 @@ The second one with boolean true as parameter renders the complete image tag.
     ->setFontSize(30)         
     ->setWidth(800)    
     ->setHeight(400)
+    ->setCSSClass('placeholder-class')
     ->setBackgroundColor('#dddddd')
     ->setTextColor('#000000')
     ->setText('My placeholder text')
