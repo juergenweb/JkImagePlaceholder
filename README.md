@@ -187,4 +187,4 @@ you want to use.
 
 ## Multi-language
 
-This module will be also shipped with the German translation file.
+This module includes the German translation file.
