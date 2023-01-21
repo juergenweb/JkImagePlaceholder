@@ -124,9 +124,9 @@ Offset on the x-axis is 3px in this case.
 
 Set the offset for the y-coordinate of the text shadow. You can enter positive or negative values
 
-`setYOffset(3)`
+`setYOffset(-2)`
 
-Offset on the y-axis is 3px in this case.
+Offset on the y-axis is -2px in this case.
 
 ### setAltText() method
 With this method you can change the alt attribute of the image tag.
@@ -136,7 +136,7 @@ With this method you can change the alt attribute of the image tag.
 
 ## Examples for usage in templates
 
-### Usage with default values from the module configuration (only the size of the image will be set manually)
+### Usage with default values from the module configuration
 
 `echo $modules->JkImagePlaceholder->render();`
 
