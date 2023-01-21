@@ -104,7 +104,7 @@ Set the fontsize of the placeholder text in px (without entering the px inside t
 
 ### setShadowColor() method
 
-Set a hexadecimal color for the text if you want to add a shadow to the text.
+Set a hexadecimal color for the shadow color if you want to add a shadow to the text.
 
 `setShadowColor('#990000')`
 
