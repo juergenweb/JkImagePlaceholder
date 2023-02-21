@@ -346,10 +346,11 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     protected function scanProject(): void
     {
-        if ($this->input->post->input_submit_refreshFonts) {
+        if ($this->input->post->input_submit_refreshFonts_jkimageplaceholder) {
             $result = $this->searchAndSave();
             if ($result) {
                 if (key($result) > 0) {
+                    bd($resulte);
                     $this->wire('session')->message(sprintf($this->_('The whole project has been scanned, and the following new TrueTypeFonts were found and added to the selectable font families: %s'),
                         implode(', ', $result)));
                 } else {
@@ -1100,7 +1101,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
         /* @var InputFieldSubmit $f */
         $fb = $modules->InputFieldsubmit;
-        $fb->attr('id+name', 'input_submit_refreshFonts');
+        $fb->attr('id+name', 'input_submit_refreshFonts_jkimageplaceholder');
         $fb->label = $this->_('Scan project for new TTF');
         $fb->value = 'refresh';
         $fb->text = $this->_('Update font files');
