@@ -1,4 +1,7 @@
 # JkImagePlaceholder
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![ProcessWire 3](https://img.shields.io/badge/ProcessWire-3.x-orange.svg)](https://github.com/processwire/processwire)
+
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
