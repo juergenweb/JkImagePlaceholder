@@ -347,20 +347,43 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     protected function scanProject(): void
     {
         if ($this->input->post->input_submit_refreshFonts_jkimageplaceholder) {
-            $result = $this->searchAndSave();
-            if ($result) {
+
+            // save all values first
+            $data = $this->wire('modules')->getConfig($this); // get values from the database
+            // cut of the last 4 post values from post array
+            $post_values = array_slice($this->wire('input')->post()->getArray(), 0, -4 );
+           // save all post data
+            foreach($post_values as $name => $value){
+                $data[$name] = $value;
+                // set the values back to the form
+                $this->$name = $value;
+
+            }
+
+            // check if font selected is still present - otherwise set default font as value
+            if(!array_key_exists($this->wire('input')->post('input_font_family'), $this->findAllFontfiles())){
+                $data['input_font_family'] = $this->pwPath2url($this->pathToFonts . 'fjallaone-regular.ttf');
+                $this->input_font_family = $data['input_font_family']; // set it back to the config form
+                $this->warning($this->_('The font family you have chosen was not found. Instead "FjallaOne-Regular" was set as default family.'));
+            }
+
+            // save the config data to the db before going on to find new fonts
+            wire('modules')->saveConfig($this, $data);
+
+            $result = $this->searchAndSave(); // output a number if higher or lower or equal 0
+            if ($result) { // number is higher or lower than 0
                 if (key($result) > 0) {
-                    bd($resulte);
-                    $this->wire('session')->message(sprintf($this->_('The whole project has been scanned, and the following new TrueTypeFonts were found and added to the selectable font families: %s'),
-                        implode(', ', $result)));
+                    // more fonts were found
+                    $this->message(sprintf($this->_('The whole project has been scanned, and the following new TrueTypeFonts were found and added to the selectable font families: %s'),
+                        implode(', ', $result[key($result)])));
                 } else {
-                    $this->wire('session')->message(sprintf($this->_('The whole project has been scanned, and the following TrueTypeFonts are no longer present and were removed from the database: %s'),
-                        implode(', ', $result)));
+                    // less fonts were found
+                    $this->message(sprintf($this->_('The whole project has been scanned, and the following TrueTypeFonts are no longer present and were removed from the database: %s'),
+                        implode(', ', $result[key($result)])));
                 }
-                // needs a redirect to show changes in the edit form of the module config
-                $this->session->redirect($this->page->httpUrl . "edit?" . $this->input->queryString);
             } else {
-                $this->message($this->_('The whole project has been scanned, but no new TrueTypeFonts were found.'));
+                // number is equal 0, which means no changes at all
+               $this->message($this->_('The whole project has been scanned, but no new TrueTypeFonts were found.'));
             }
         }
     }
@@ -397,7 +420,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Check if entered color code is in hexadecimal format (# as first letter)
-     * @param string hexadecimal
+     * @param string $hexadecimal
      * @return bool
      */
     private function validateHexadecimal(string $hexadecimal): bool
@@ -472,7 +495,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Set the width of the placeholder image
-     * @param int width  (fe 400); required value
+     * @param int $width (fe 400); required value
      * @return self
      */
     public function setWidth(int $width): self
@@ -485,7 +508,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Get the width of the placeholder image
-     * @return int|null
+     * @return int
      */
     public function getWidth(): int
     {
@@ -494,7 +517,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Set the Height of the placeholder image
-     * @param int height  (fe 300)
+     * @param int $height (fe 300)
      * @return self
      */
     public function setHeight(int $height): self
@@ -507,7 +530,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Get the height of the placeholder image
-     * @return int|null
+     * @return int
      */
     public function getHeight(): int
     {
@@ -773,7 +796,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     /**
      * Create an array of all ttf files for the select options
-     * @param array fonts - a numeric array with font names as value
      * @return array - returns each array item in the format ['font-file-name' => 'font name']
      */
     private function createFontFamilySelect(): array
@@ -938,8 +960,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function getModuleConfigInputfields(InputfieldWrapper $inputfields): InputfieldWrapper
     {
 
-        $modules = $this->wire('modules');
-
         $markup = InputfieldWrapper::getMarkup();
 
         if (($this->wire('modules')->isInstalled('FieldtypeColor')) || ($this->wire('modules')->isInstalled('FieldtypeColorPicker'))) {
@@ -955,7 +975,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             }
 
             /* @var InputfieldSelect $f */
-            $f = $modules->InputfieldSelect;
+            $f =  $this->modules->get('InputfieldSelect');
             $f->attr('id+name', 'input_module_color_inputfield');
             $f->label = $this->_('Select the inputfield for colors');
             $f->addOptions($options);
@@ -971,7 +991,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $sizesFieldset->columnWidth = 100;
 
         /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
+        $f =  $this->modules->get('InputfieldInteger');
         $f->attr('id+name', 'input_width');
         $f->inputType = 'number';
         $f->step = 1;
@@ -983,7 +1003,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $sizesFieldset->add($f);
 
         /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
+        $f =  $this->modules->get('InputfieldInteger');
         $f->attr('id+name', 'input_height');
         $f->inputType = 'number';
         $f->step = 1;
@@ -995,7 +1015,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $sizesFieldset->add($f);
 
         /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
+        $f =  $this->modules->get('InputfieldInteger');
         $f->attr('id+name', 'input_font_size');
         $f->inputType = 'number';
         $f->step = 1;
@@ -1016,7 +1036,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $fieldtype = $this->input_module_color_inputfield;
 
         /* @var Inputfield $f */
-        $f = $modules->$fieldtype;
+        $f =  $this->modules->get($fieldtype);
         $f->value = $this->input_background_color;
         $f->swatch = $this->input_background_color;
         $f->attr('id+name', 'input_background_color');
@@ -1026,7 +1046,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $stylingFieldset->add($f);
 
         /* @var Inputfield $f */
-        $f = $modules->$fieldtype;
+        $f =  $this->modules->get($fieldtype);
         $f->value = $this->input_text_color;
         $f->swatch = $this->input_text_color;
         $f->attr('id+name', 'input_text_color');
@@ -1036,7 +1056,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $stylingFieldset->add($f);
 
         /* @var Inputfield $f */
-        $f = $modules->$fieldtype;
+        $f =  $this->modules->get($fieldtype);
         $f->value = $this->input_shadow_color;
         $f->swatch = $this->input_shadow_color;
         $f->attr('id+name', 'input_shadow_color');
@@ -1047,7 +1067,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $stylingFieldset->add($f);
 
         /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
+        $f =  $this->modules->get('InputfieldInteger');
         $f->attr('id+name', 'input_x_offset');
         $f->inputType = 'number';
         $f->step = 1;
@@ -1058,7 +1078,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $stylingFieldset->add($f);
 
         /* @var InputfieldInteger $f */
-        $f = $modules->InputfieldInteger;
+        $f =  $this->modules->get('InputfieldInteger');
         $f->attr('id+name', 'input_y_offset');
         $f->inputType = 'number';
         $f->step = 1;
@@ -1071,7 +1091,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $inputfields->add($stylingFieldset);
 
         /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
+        $f =  $this->modules->get('InputfieldText');
         $f->attr('id+name', 'input_text');
         $f->label = $this->_('Global placeholder text');
         $f->description = $this->_('Enter a default text for the placeholder image (fe Sorry, no pic). Leaving this field blank means a placeholder image without any text information.');
@@ -1086,7 +1106,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
 
         /* @var InputfieldText $f */
-        $f = $modules->InputfieldText;
+        $f =  $this->modules->get('InputfieldText');
         $f->attr('id+name', 'input_css_class');
         $f->label = $this->_('Global CSS class');
         $f->description = $this->_('Enter a default CSS class for the placeholder image tag (fe placeholder).');
@@ -1100,7 +1120,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $fontsFieldset->columnWidth = 100;
 
         /* @var InputFieldSubmit $f */
-        $fb = $modules->InputFieldsubmit;
+        $fb =  $this->modules->get('InputFieldsubmit');
         $fb->attr('id+name', 'input_submit_refreshFonts_jkimageplaceholder');
         $fb->label = $this->_('Scan project for new TTF');
         $fb->value = 'refresh';
@@ -1120,7 +1140,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
         // Select the font family
         /* @var InputfieldRadios $f */
-        $f = $modules->InputfieldRadios;
+        $f =  $this->modules->get('InputfieldRadios');
         $f->attr('id+name', 'input_font_family');
         $f->label = $this->_('Default font family');
         $f->value = $this->input_font_family;
@@ -1138,7 +1158,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $inputfields->add($fontsFieldset);
 
         /** @var InputfieldFile $f */
-        $f = $modules->InputfieldFile;
+        $f =  $this->modules->get('InputfieldFile');
         $f->attr('id+name', 'input_font_upload');
         $f->label = $this->_('Upload new TrueTypeFonts');
         $f->description = $this->_('Select the TrueTypeFont for the upload.');
@@ -1152,7 +1172,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         // Select TrueTypeFonts for deletion
         /* @var InputfieldCheckboxes $f */
         if ($this->getAllCustomFonts()) {
-            $f = $modules->InputfieldCheckboxes;
+            $f = $this->modules->get('InputfieldCheckboxes');
             $f->attr('id+name', 'input_delete_font_family');
             $f->label = $this->_('Delete custom uploaded TrueTypeFont(s)');
             $f->description = $this->_('Please select the TrueTypeFonts, which should be deleted.');
