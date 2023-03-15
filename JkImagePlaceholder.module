@@ -38,7 +38,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             'requires' => 'ProcessWire>=3.0.181, PHP>=8.1.0',
             'href' => 'https://github.com/juergenweb/JkImagePlaceholder',
             'icon' => 'image',
-            'version' => '1.4.0'
+            'version' => '1.5.0'
         ];
     }
 
