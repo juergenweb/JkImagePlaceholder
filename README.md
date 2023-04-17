@@ -5,6 +5,10 @@
 Processwire module for easy creation of placeholder images on the frontend. Uses TrueType fonts for the placeholder text
 (fe Sorry, no pic!).
 
+## Requirements
+* PHP>=8.1
+* ProcessWire>=3.0.181
+
 ## Usage
 My intention was to create "real" placeholder images for products, user images and others that will be displayed to real site users if an image is missing. I did not want to use too much different font families on a site. For this reason, I thought that it would be pretty cool to be able to use the same font for the text inside the placeholder image as used for the text of the site. This is possible with this module.
 
