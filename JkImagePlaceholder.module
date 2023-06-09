@@ -110,9 +110,11 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $this->addHookBefore('Modules::saveConfig', $this, 'deleteFonts');
         $this->addHookBefore('ProcessModule::executeEdit', $this, 'scanProject');
 
-        // add CSS for fonts to the backend
-        $version = $this->getModuleInfo()['version'] . '-' . time();
-        $this->wire('config')->styles->add($this->wire('config')->urls->{$this->className} . 'assets/jkimageplaceholderfont.css?v=' . $version);
+        // add CSS for fonts to the backend if it exists
+        if($this->wire('files')->exists($this->wire('config')->urls.'JkImagePlaceholder/assets/jkimageplaceholderfont.css')){
+            $version = $this->getModuleInfo()['version'] . '-' . time();
+            $this->wire('config')->styles->add($this->wire('config')->urls.'JkImagePlaceholder/assets/jkimageplaceholderfont.css?v=' . $version);
+        }
 
     }
 
@@ -1154,8 +1156,15 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->description = $this->_('Please select the default font family for the placeholder text.');
         $f->notes = $this->_('The list above contains TrueTypeFonts which were found across the whole project (not only from inside the fonts folder of this module).');
         foreach ($this->createFontFamilySelect() as $value => $label) {
-            $f->addOption($value, $label,
-                ['class' => 'font-option css-' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
+            bd($value);
+            bd($this->input_font_family);
+            if($value == $this->input_font_family){
+                $f->addOption($value, $label,
+                    ['checked' => 'checked', 'class' => 'font-option css-' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
+            } else {
+                $f->addOption($value, $label,
+                    ['class' => 'font-option css-' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
+            }
         }
         $f->required = true;
 
