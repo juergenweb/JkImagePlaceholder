@@ -1156,8 +1156,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $f->description = $this->_('Please select the default font family for the placeholder text.');
         $f->notes = $this->_('The list above contains TrueTypeFonts which were found across the whole project (not only from inside the fonts folder of this module).');
         foreach ($this->createFontFamilySelect() as $value => $label) {
-            bd($value);
-            bd($this->input_font_family);
             if($value == $this->input_font_family){
                 $f->addOption($value, $label,
                     ['checked' => 'checked', 'class' => 'font-option css-' . strtolower(pathinfo($label, PATHINFO_FILENAME))]);
