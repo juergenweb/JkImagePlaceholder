@@ -1297,7 +1297,12 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $this->wire('files')->rmdir($this->wire('config')->paths->assets . 'files/JkImagePlaceholder/', true);
     }
 
-
+    /**
+     * @param $fromVersion
+     * @param $toVersion
+     * @return void
+     * @throws WireException
+     */
     public function ___upgrade($fromVersion, $toVersion):void
     {
         $this->wire('files')->mkdir($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/');
