@@ -47,7 +47,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             'requires' => 'ProcessWire>=3.0.181, PHP>=8.1.0',
             'href' => 'https://github.com/juergenweb/JkImagePlaceholder',
             'icon' => 'image',
-            'version' => '1.5.2'
+            'version' => '1.5.1'
         ];
     }
 
@@ -103,7 +103,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
      */
     public function init():void
     {
-
+        
         $this->addHookBefore('InputfieldColorPicker::render', $this, 'removeHashtag');
         $this->addHookAfter("Inputfield::processInput", $this, "sanitizeValidateColorField");
         $this->addHookAfter('InputfieldFile::fileAdded', $this, 'addFont');
@@ -1307,8 +1307,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         $this->wire('files')->mkdir($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/');
         // create and save CSS file for the TTF
-        $fontfiles = $this->findAllFontfiles();
-        $this->createCSSFile($fontfiles);
+        $this->createCSSFile($this->font_files);
     }
 
 }
