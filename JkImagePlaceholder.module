@@ -226,10 +226,6 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
             if ($minify) {
                 $css = $this->minimizeCSSsimple($css); // minify CSS file
             }
-            // check if file exists, otherwise create it
-            if(!$this->wire('files')->exists($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css')){
-                $this->wire('files')->mkdir($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css');
-            }
             // write css to file
             if ($this->wire('files')->filePutContents($this->wire('config')->paths->$this . 'assets/jkimageplaceholderfont.css',
                 $css)) {
