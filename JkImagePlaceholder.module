@@ -111,10 +111,10 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
         $this->addHookBefore('ProcessModule::executeEdit', $this, 'scanProject');
 
         // add CSS for fonts to the backend if it exists
-        if($this->wire('files')->exists($this->wire('config')->urls.'JkImagePlaceholder/assets/jkimageplaceholderfont.css')){
+        //if($this->wire('files')->exists($this->wire('config')->urls.'JkImagePlaceholder/assets/jkimageplaceholderfont.css')){
             $version = $this->getModuleInfo()['version'] . '-' . time();
-            $this->wire('config')->styles->add($this->wire('config')->urls.'JkImagePlaceholder/assets/jkimageplaceholderfont.css?v=' . $version);
-        }
+            $this->wire('config')->styles->add($this->wire('config')->urls->siteModules.'JkImagePlaceholder/assets/jkimageplaceholderfont.css?v=' . $version);
+        //}
 
     }
 
