@@ -1306,6 +1306,9 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     public function ___upgrade($fromVersion, $toVersion):void
     {
         $this->wire('files')->mkdir($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/');
+        // create and save CSS file for the TTF
+        $fontfiles = $this->findAllFontfiles();
+        $this->createCSSFile($fontfiles);
     }
 
 }
