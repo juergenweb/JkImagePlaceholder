@@ -21,5 +21,8 @@ This step was necessary, because the custom uploaded font files, which have bee 
 modules until now, will be deleted during an update.
 To prevent the deletion, the custom font will be stored inside this new location now.
 
-You do not have to take care of this behavior during the this update, because all your previously uploaded custom files will be copied
-to the new location automatically.
+IMPORTANT:
+If you have uploaded custom fonts during this module before, you have to upload them once more after this update, because they
+will be deleted. This is only the case by updating from an older version to this new version. All other upcoming updates
+will not be affected.
+If you run into troubles, it is recommended to make a complete fresh install of this module.
