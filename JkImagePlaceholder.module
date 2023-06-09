@@ -1295,6 +1295,24 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
     {
         // create custom font template folder if it does not exist
         $this->wire('files')->mkdir($this->wire('config')->paths->assets.'files/JKImagePlaceholder/');
+
+        $font_files = $this->wire('files')->find($this->pathToFonts, ['extensions' => ['ttf','TTF']]);
+
+        $default_fonts = [
+            $this->pathToFonts.'fjallaone-regular.ttf',
+            $this->pathToFonts.'lobster-regular.ttf',
+        ];
+
+        // find all files, which are in $font_files, but not in $default_fonts
+        $diff_files = array_diff($font_files, $default_fonts);
+        if($diff_files){
+            // copy each custom font to the new folder
+            foreach($diff_files as $from){
+                $to = $this->pathToCustomFonts;
+                $this->wire('files')->copy($from, $to);
+                $this->wire('files')->unlink($from);
+            }
+        }
     }
 
 }
