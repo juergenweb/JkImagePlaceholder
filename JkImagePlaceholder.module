@@ -1320,7 +1320,7 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
                 $this->wire('files')->unlink($from);
             }
             // create CSS file
-            $this->createCSSFile($this->findAllFontfiles());
+            //$this->createCSSFile($this->findAllFontfiles());
         }
     }
 
