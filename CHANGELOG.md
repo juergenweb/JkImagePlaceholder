@@ -10,7 +10,7 @@ In this version, this behavior was eliminated. So if you press the button to upd
 done changes inside your module configuration were saved before, so they will not get lost anymore.
 Some minor code optimizations were done too to optimize the performance.
 
-## [1.5.1] - 2023-06-09
+## [1.5.2] - 2023-06-09
 
 ### New place to store your custom fonts
 
