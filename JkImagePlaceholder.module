@@ -1300,27 +1300,30 @@ class JkImagePlaceholder extends WireData implements Module, ConfigurableModule
 
     public function ___upgrade($fromVersion, $toVersion):void
     {
-        // create custom font template folder if it does not exist
-        $this->wire('files')->mkdir($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/');
-        $from = $this->wire('config')->paths->siteModules . '.JkImagePlaceholder/fonts/';
-        $font_files = $this->wire('files')->find($from, ['extensions' => ['ttf', 'TTF']]);
+        // check if custom font folder exists, otherwise create it
+        if ($this->wire('files')->exists($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/')){
+            // create custom font template folder if it does not exist
+            $this->wire('files')->mkdir($this->wire('config')->paths->assets . 'files/JKImagePlaceholder/');
+            $from = $this->wire('config')->paths->siteModules . '.JkImagePlaceholder/fonts/';
+            $font_files = $this->wire('files')->find($from, ['extensions' => ['ttf', 'TTF']]);
 
-        $default_fonts = [
-            $this->pathToFonts . 'fjallaone-regular.ttf',
-            $this->pathToFonts . 'lobster-regular.ttf',
-        ];
+            $default_fonts = [
+                $from.'.JkImagePlaceholder/fonts/fjallaone-regular.ttf',
+                $from. '.JkImagePlaceholder/fonts/lobster-regular.ttf',
+            ];
 
-        // find all files, which are in $font_files, but not in $default_fonts
-        $diff_files = array_diff($font_files, $default_fonts);
-        if ($diff_files) {
-            // copy each custom font to the new folder
-            foreach ($diff_files as $from) {
-                $to = $this->pathToCustomFonts;
-                $this->wire('files')->copy($from, $to);
-                $this->wire('files')->unlink($from);
+            // find all files, which are in $font_files, but not in $default_fonts
+            $diff_files = array_diff($font_files, $default_fonts);
+            if ($diff_files) {
+                // copy each custom font to the new folder
+                foreach ($diff_files as $from) {
+                    $to = $this->pathToCustomFonts;
+                    $this->wire('files')->copy($from, $to);
+                    $this->wire('files')->unlink($from);
+                }
+                // create CSS file
+                //$this->createCSSFile($this->findAllFontfiles());
             }
-            // create CSS file
-            //$this->createCSSFile($this->findAllFontfiles());
         }
     }
 
