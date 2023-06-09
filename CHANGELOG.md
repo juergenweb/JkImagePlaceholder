@@ -10,3 +10,16 @@ In this version, this behavior was eliminated. So if you press the button to upd
 done changes inside your module configuration were saved before, so they will not get lost anymore.
 Some minor code optimizations were done too to optimize the performance.
 
+## [1.5.1] - 2023-06-09
+
+### New place to store your custom fonts
+
+During this update a new folder will be created outside the module directory. You will find this new folder under this path:
+site/assets/files/JkImagePlaceholder/
+
+This step was necessary, because the custom uploaded font files, which have bee stored inside the font folder of this
+modules until now, will be deleted during an update.
+To prevent the deletion, the custom font will be stored inside this new location now.
+
+You do not have to take care of this behavior during the this update, because all your previously uploaded custom files will be copied
+to the new location automatically.
